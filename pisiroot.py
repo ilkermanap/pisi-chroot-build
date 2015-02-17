@@ -1,5 +1,5 @@
 import os, sys, uuid, syslog, subprocess, glob
-
+import time
 """
 https://github.com/evolve-os/repository/blob/master/system/base/pisi/files/evobuild.sh
 
@@ -9,8 +9,7 @@ Used the script above.
 global CACHEDIR
 CACHEDIR= "/var/cache/pisi/packages"
 
-BASE = "acl attr baselayout bash binutils bzip2 expat catbox coreutils file gawk gcc glibc glibc-devel gmp grep kernel-headers libcap  libffi libgcc libmpc libpcre make mpfr ncurses openssl pisi python readline sed zlib autoconf automake diffutils   gnuconfig libtool piksemel ca-certificates  comar-api curl gperftools  leveldb  libgcrypt libgpg-error libidn dbus     libssh2 libunwind pisilinux-dev-tools pisilinux-python  plyvel pycurl python python3 python-pyliblzma run-parts    snappy urlgrabber xz"
-
+BASE = "gc libunwind elfutils  gmp pisilinux-dev-tools"
 
 class PisiPackage:
     """
@@ -29,7 +28,11 @@ class PisiPackage:
 
     def checkFile(self, fname, pname):
         print "packages, ",fname, pname
-        f = os.popen("pisi info  %s" % fname).readlines()
+        n = fname.split("/")[-1]
+        cmd = "pisi info %s > /tmp/%s.info" % (fname, n)
+        print cmd
+        os.system(cmd)
+        f = open("/tmp/%s.info" % n ).readlines()
         print "2"
         for line in f:
             if line.find("Name") > -1:
@@ -49,6 +52,14 @@ class PisiPackage:
         Name                : ncurses-devel, version: 5.9, release: 5
 
         """
+        # FIXME 
+        # asagidaki glob satiri, paket ismine karsilik he zaman dogru 
+        # calismayabiiyor.. ornek, zlib-32bit ile zlib 
+        # zlib isteyip, zlib-32bit alabiliriz..
+        # dosya adi ile pisi info almaya calistigimda, bazi paketlerde 
+        # os.popen, subprocess.check_output, ya da os.system komutlarinin
+        # hepsi de komutu bitiremiyor..  ornek pisilinux-dev-tools
+        #
         files = glob.glob("%s/%s-[0-9]*" % (CACHEDIR, name))
         if len(files) > 0:
             print files[-1], name
@@ -132,7 +143,9 @@ class RootFS:
         self.installBase()
         self.copyFiles()
         self.mknods()
-        self.runCommand("pisi ar pisirepo %s" % self.repo)
+        self.runCommand("groupadd -g 18 messagebus")
+        self.runCommand('chroot $TDIR useradd -m -d /var/run/dbus -r -s /bin/false -u 18 -g 18 messagebus -c "D-Bus Message Daemon"') 
+        self.copyFile("/usr/libexec/dbus-daemon-launch-helper", "/usr/lib/dbus-1.0")
         self.runCommand("dbus-uuidgen --ensure")
         self.runCommand("dbus-daemon --system")
         self.runCommand("chmod o+x /usr/lib/dbus-1.0/dbus-daemon-launch-helper")
@@ -146,11 +159,33 @@ class RootFS:
         self.runCommand("mknod /dev/random c 1 8")
         self.runCommand("mknod /dev/urandom c 1 9")
 
-    def copyFiles(self):
-        cmd = "cp /etc/resolv.conf %s/etc/." % self.rootdir
+    def copyFile(self, filename, newpath = ""):
+        if newpath ==  "":
+            path = filename[:filename.rfind("/")]
+            oldname = filename
+        else:
+            path = newpath
+            oldname = filename
+            filename = "%s/%s" % (newpath,filename.split("/")[-1])
+
+        pathcmd = "mkdir -p %s/%s" % (self.rootdir, path)
+        print "pathcmd = ", pathcmd
+        os.system(pathcmd)
+        cmd = "cp %s %s/%s" % (oldname, self.rootdir, filename)
+        print "copy cmd = ", cmd
         os.system(cmd)
 
+    def copyFiles(self):
+        os.system("cp /usr/share/baselayout/* %s/etc/." % self.rootdir)
+        self.copyFile("/etc/resolv.conf")
+
     def installBase(self):
+        cmd = "pisi ar farm -D %s %s" % (self.rootdir, self.repo)
+        os.system(cmd)
+        cmd = "pisi it -c system.base -y --ignore-comar --ignore-dep -D %s" % self.rootdir
+        os.system(cmd)
+        cmd = "pisi it -c system.devel -y --ignore-comar --ignore-dep -D %s" % self.rootdir
+        os.system(cmd)
         for pkgname, pkg in self.base.packages.items():
             pkg.install(self.rootdir)
             print pkg.filename
@@ -177,19 +212,22 @@ class RootFS:
     def clean(self):
         self.mountDirs(umount = True)
 
-    def findBuildDeps(self):
+    
+    def findDeps(self, tag, ignoreDep = False):
 
         from xml.dom import minidom
 
         pspec = minidom.parse("%s/root/pkg/pspec.xml" % self.rootdir)
-        alldeps = pspec.getElementsByTagName("BuildDependencies")
-        deps = alldeps[0].getElementsByTagName("Dependency")
-        for d in deps:
-            deppkg = d.toxml().split(">")[1].split("<")[0]
-            self.buildDeps.addPackage(deppkg)
+        alldeps = pspec.getElementsByTagName(tag)
+        if len(alldeps) > 0:
+            deps = alldeps[0].getElementsByTagName("Dependency")
+            for d in deps:
+                print d.toxml()
+                deppkg = d.toxml().split(">")[1].split("<")[0]
+                self.buildDeps.addPackage(deppkg)
 
-        for pkgname, pkg in self.buildDeps.packages.items():
-            pkg.install(self.rootdir)
+            for pkgname, pkg in self.buildDeps.packages.items():
+                pkg.install(self.rootdir, ignoreDep)
 
 
     def addpkg(self, pkgdir):
@@ -200,6 +238,8 @@ class RootFS:
 if __name__ == "__main__":
     x = RootFS()
     x.addpkg(sys.argv[1])
-    x.findBuildDeps()
+    x.findDeps("BuildDependencies")
+    x.findDeps("RuntimeDependencies")
+
     x.runCommand("pisi  --ignore-action-errors --ignore-safety bi   /root/pkg/pspec.xml")
     x.clean()
