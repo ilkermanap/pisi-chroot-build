@@ -1,6 +1,6 @@
 # pisi-chroot-build
 
-It is a short term application to create a chroot environment for building pisi packages.
+It is a short term application to create a chroot environment for building pisi packages. There are different work to add this functionality directly into the pisi application. 
 
 ## Usage
 
