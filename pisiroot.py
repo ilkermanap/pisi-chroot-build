@@ -6,23 +6,25 @@ https://github.com/evolve-os/repository/blob/master/system/base/pisi/files/evobu
 Used the script above.
 """
 
-global CACHEDIR 
+global CACHEDIR
 CACHEDIR= "/var/cache/pisi/packages"
 
-BASE = "acl attr baselayout bash binutils catbox coreutils file gawk gcc glibc glibc-devel gmp grep kernel-headers libcap libffi libgcc libmpc libpcre make mpfr ncurses openssl pisi python readline sed zlib autoconf automake diffutils gnuconfig libtool piksemel"
+BASE = "acl attr baselayout bash binutils catbox coreutils file gawk gcc glibc glibc-devel gmp grep kernel-headers libcap  libffi libgcc libmpc libpcre make mpfr ncurses openssl pisi python readline sed zlib autoconf automake diffutils   gnuconfig libtool piksemel ca-certificates  comar-api curl gperftools  leveldb  libgcrypt libgpg-error libidn      libssh2 libunwind pisilinux-dev-tools pisilinux-python  plyvel pycurl python python3 python-pyliblzma run-parts    snappy urlgrabber xz"
+
 
 class PisiPackage:
     """
     Basic pisi package operations class
     During init, it will search the local cache,
-    if name isn't found, then it will fetch the 
+    if name isn't found, then it will fetch the
     package from remote repository.
     """
     def __init__(self, pname):
         self.filename = self.findInCache(pname)
         if self.filename == False:
             self.retrieve(pname)
-        
+            self.filename = self.findInCache(pname)
+
     def findInCache(self, name):
         """
         Check if the package file is in cache
