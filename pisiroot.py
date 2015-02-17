@@ -9,7 +9,7 @@ Used the script above.
 global CACHEDIR 
 CACHEDIR= "/var/cache/pisi/packages"
 
-BASE = "acl attr baselayout bash binutils catbox coreutils file gawk gcc glibc glibc-devel gmp grep kernel-headers libcap libffi libgcc libmpc libpcre make mpfr ncurses openssl pisi python readline sed zlib autoconf automake diffutils gnuconfig libtool"
+BASE = "acl attr baselayout bash binutils catbox coreutils file gawk gcc glibc glibc-devel gmp grep kernel-headers libcap libffi libgcc libmpc libpcre make mpfr ncurses openssl pisi python readline sed zlib autoconf automake diffutils gnuconfig libtool piksemel"
 
 class PisiPackage:
     """
