@@ -1,5 +1,7 @@
 import os, sys, uuid, syslog, subprocess, glob
 import time
+
+
 """
 https://github.com/evolve-os/repository/blob/master/system/base/pisi/files/evobuild.sh
 
@@ -8,8 +10,8 @@ Used the script above.
 
 global CACHEDIR
 CACHEDIR= "/var/cache/pisi/packages"
-
-BASE = "zlib-32bit gc mpfr libunwind elfutils gmp libgomp openldap-client gnutls utempter python-psutil"
+BASE = "colord dconf gtk3 zlib-32bit gc mpfr libunwind elfutils gmp libgomp openldap-client gnutls utempter python-psutil"
+#BASE = "elfutils libgomp openldap-client gnutls utempter"
 
 class PisiPackage:
     """
@@ -120,6 +122,8 @@ class Packages:
 
 class RootFS:
     def __init__(self, pkgdir):
+        if pkgdir[-1] == "/":
+            pkgdir = pkgdir[:-1]
         self.pkgdir = pkgdir.split("/")[-1]
         self.base = Packages(liststr = BASE)
         self.buildDeps = Packages()
