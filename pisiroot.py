@@ -9,7 +9,7 @@ Used the script above.
 global CACHEDIR
 CACHEDIR= "/var/cache/pisi/packages"
 
-BASE = "gc libunwind elfutils  gmp pisilinux-dev-tools"
+BASE = "zlib-32bit gc mpfr libunwind elfutils gmp libgomp openldap-client gnutls utempter python-psutil"
 
 class PisiPackage:
     """
@@ -27,13 +27,10 @@ class PisiPackage:
 
 
     def checkFile(self, fname, pname):
-        print "packages, ",fname, pname
         n = fname.split("/")[-1]
         cmd = "pisi info %s > /tmp/%s.info" % (fname, n)
-        print cmd
         os.system(cmd)
         f = open("/tmp/%s.info" % n ).readlines()
-        print "2"
         for line in f:
             if line.find("Name") > -1:
                 fpkgname = line.split(":")[1].split(",")[0].strip()
@@ -44,19 +41,17 @@ class PisiPackage:
     def findInCache(self, name):
         """
         Check if the package file is in cache
-        return filename if found, 
+        return filename if found,
         else return False
-
-
         Package file        : ncurses-devel-5.9-5-p01-x86_64.pisi
         Name                : ncurses-devel, version: 5.9, release: 5
 
         """
-        # FIXME 
-        # asagidaki glob satiri, paket ismine karsilik he zaman dogru 
-        # calismayabiiyor.. ornek, zlib-32bit ile zlib 
+        # FIXME
+        # asagidaki glob satiri, paket ismine karsilik he zaman dogru
+        # calismayabiiyor.. ornek, zlib-32bit ile zlib
         # zlib isteyip, zlib-32bit alabiliriz..
-        # dosya adi ile pisi info almaya calistigimda, bazi paketlerde 
+        # dosya adi ile pisi info almaya calistigimda, bazi paketlerde
         # os.popen, subprocess.check_output, ya da os.system komutlarinin
         # hepsi de komutu bitiremiyor..  ornek pisilinux-dev-tools
         #
@@ -78,7 +73,7 @@ class PisiPackage:
         os.system("pisi fc %s" % name)
         os.chdir(currpath)
 
-    def install(self, basedir, ignoredep = True):
+    def install(self, basedir, ignoredep = False):
         """
         Install the package
 
@@ -96,6 +91,7 @@ class PisiPackage:
         if ignoredep == True:
             cmd += " --ignore-dep"
         cmd += " -D %s -y %s  " % (basedir, self.filename)
+        print cmd
         os.system(cmd)
 
 class Packages:
@@ -123,14 +119,14 @@ class Packages:
         self.packages[name] = PisiPackage(name)
 
 class RootFS:
-    def __init__(self):
+    def __init__(self, pkgdir):
+        self.pkgdir = pkgdir.split("/")[-1]
         self.base = Packages(liststr = BASE)
         self.buildDeps = Packages()
         self.repo = "http://farm.pisilinux.org/.nofarm-repo/x86_64/pisi-index.xml.xz"
         self.cache = "/var/cache/pisi/packages"
         os.system("mkdir -p %s" % self.cache)
-        self.rootdir = "/var/pisi/rootfs-%s" % uuid.uuid1()
-        self.rootdir = "/var/pisi/rootfs-test"
+        self.rootdir = "/var/pisi/rootfs-%s" % self.pkgdir
 
         self.pisicmd = "pisi it --ignore-comar --ignore-safety -D %s/ -y" % self.rootdir
         print self.rootdir
@@ -144,20 +140,20 @@ class RootFS:
         self.copyFiles()
         self.mknods()
         self.runCommand("groupadd -g 18 messagebus")
-        self.runCommand('chroot $TDIR useradd -m -d /var/run/dbus -r -s /bin/false -u 18 -g 18 messagebus -c "D-Bus Message Daemon"') 
+        self.runCommand('useradd -m -d /var/run/dbus -r -s /bin/false -u 18 -g 18 messagebus -c "D-Bus Message Daemon"')
         self.copyFile("/usr/libexec/dbus-daemon-launch-helper", "/usr/lib/dbus-1.0")
         self.runCommand("dbus-uuidgen --ensure")
         self.runCommand("dbus-daemon --system")
         self.runCommand("chmod o+x /usr/lib/dbus-1.0/dbus-daemon-launch-helper")
         self.runCommand("pisi configure-pending")
 
-
-
     def mknods(self):
         self.runCommand("mknod /dev/console c 5 1")
         self.runCommand("mknod /dev/null c 1 3")
         self.runCommand("mknod /dev/random c 1 8")
         self.runCommand("mknod /dev/urandom c 1 9")
+        cmd = "pisi up -dvys"
+        self.runCommand(cmd)
 
     def copyFile(self, filename, newpath = ""):
         if newpath ==  "":
@@ -182,13 +178,15 @@ class RootFS:
     def installBase(self):
         cmd = "pisi ar farm -D %s %s" % (self.rootdir, self.repo)
         os.system(cmd)
-        cmd = "pisi it -c system.base -y --ignore-comar --ignore-dep -D %s" % self.rootdir
-        os.system(cmd)
-        cmd = "pisi it -c system.devel -y --ignore-comar --ignore-dep -D %s" % self.rootdir
-        os.system(cmd)
         for pkgname, pkg in self.base.packages.items():
-            pkg.install(self.rootdir)
-            print pkg.filename
+            pkg.install(self.rootdir, True)
+
+        cmd = "pisi it -c system.base -y --ignore-comar -D %s" % self.rootdir
+        os.system(cmd)
+        cmd = "pisi it -c system.devel -y --ignore-comar -D %s" % self.rootdir
+        os.system(cmd)
+
+
 
     def runCommand(self, cmd):
         os.system("chroot %s  %s" % (self.rootdir, cmd) )
@@ -212,7 +210,6 @@ class RootFS:
     def clean(self):
         self.mountDirs(umount = True)
 
-    
     def findDeps(self, tag, ignoreDep = False):
 
         from xml.dom import minidom
@@ -236,7 +233,7 @@ class RootFS:
         os.system(cmd)
 
 if __name__ == "__main__":
-    x = RootFS()
+    x = RootFS(sys.argv[1])
     x.addpkg(sys.argv[1])
     x.findDeps("BuildDependencies")
     x.findDeps("RuntimeDependencies")
