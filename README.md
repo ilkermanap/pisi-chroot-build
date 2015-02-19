@@ -6,4 +6,4 @@ It is a short term application to create a chroot environment for building pisi 
 
 Pass the directory where the pspec.xml is for the package.
 
-`sudo python pisiroot.py  /home/test/Pisilinux/main/network/openvpn`
+`sudo python pisichroot.py  /home/test/Pisilinux/main/network/openvpn`
