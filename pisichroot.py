@@ -1,6 +1,12 @@
 import os, sys, uuid, syslog, subprocess, glob
 import time
 
+from iniparse import INIConfig
+
+pisiconf = INIConfig(open('/etc/pisi/pisi.conf'))
+
+print pisiconf.directories.cache_root_dir
+
 
 """
 https://github.com/evolve-os/repository/blob/master/system/base/pisi/files/evobuild.sh
@@ -239,8 +245,8 @@ class RootFS:
 if __name__ == "__main__":
     x = RootFS(sys.argv[1])
     x.addpkg(sys.argv[1])
-    x.findDeps("BuildDependencies")
-    x.findDeps("RuntimeDependencies")
+    x.findDeps("BuildDependencies", True)
+    x.findDeps("RuntimeDependencies", True)
 
     x.runCommand("pisi  --ignore-action-errors --ignore-safety bi   /root/pkg/pspec.xml")
     x.clean()
