@@ -1,13 +1,12 @@
 import os, sys, uuid, syslog, subprocess, glob
 import time
-
-from iniparse import INIConfig
-
-pisiconf = INIConfig(open('/etc/pisi/pisi.conf'))
-
-print pisiconf.directories.cache_root_dir
-
-
+try:
+    from iniparse import INIConfig
+    pisiconf = INIConfig(open('/etc/pisi/pisi.conf'))
+    print pisiconf.directories.cache_root_dir
+except:
+    print "python-iniparse pisi paketini kurunuz\nPlease install python-iniparse."
+    sys.exit()
 """
 https://github.com/evolve-os/repository/blob/master/system/base/pisi/files/evobuild.sh
 
