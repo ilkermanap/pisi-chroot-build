@@ -3,7 +3,6 @@ import time
 try:
     from iniparse import INIConfig
     pisiconf = INIConfig(open('/etc/pisi/pisi.conf'))
-    print pisiconf.directories.cache_root_dir
 except:
     print "python-iniparse pisi paketini kurunuz\nPlease install python-iniparse."
     sys.exit()
@@ -17,6 +16,21 @@ global CACHEDIR
 CACHEDIR= "/var/cache/pisi/packages"
 BASE = "colord dconf gtk3 zlib-32bit gc mpfr libunwind elfutils gmp libgomp openldap-client gnutls utempter python-psutil"
 #BASE = "elfutils libgomp openldap-client gnutls utempter"
+
+
+def repoBul():
+    cmd = "pisi lr | grep -v '\[inactive' "
+    lines = os.popen(cmd, "r").readlines()
+    inactive = False
+    for line in lines:
+        if inactive == True:
+            inactive = False
+            continue
+        if line.find("[inactive") > -1:
+            inactive = True
+        if inactive 
+repoBul()
+sys.exit()
 
 class PisiPackage:
     """
@@ -126,7 +140,8 @@ class Packages:
         self.packages[name] = PisiPackage(name)
 
 class RootFS:
-    def __init__(self, pkgdir):
+    def __init__(self, params,pkgdir):
+        pkgdir = params['pspecdizini']
         if pkgdir[-1] == "/":
             pkgdir = pkgdir[:-1]
         self.pkgdir = pkgdir.split("/")[-1]
@@ -242,6 +257,71 @@ class RootFS:
         os.system(cmd)
 
 if __name__ == "__main__":
+    import getopt
+
+    helpstr = """
+Arguments:
+--------------------------
+-y, --yardim         : This help screen in Turkish
+
+-h, --help           : This help screen in English
+-A, --source-archive :
+"""
+    yardim = """
+Argumanlar:
+---------------------------
+-y, --yardim          : Turkce yardim ekrani
+-h, --help            : Ingilizce yardim ekrani
+
+-A veya --kaynakarsiv : Derleme icin cekilen kaynak kodlarin bulundugu
+                        dizini belirtmek icin kullanilir. Belirtilmezse
+                        /etc/pisi/pisi.conf icinde belirtilen deger
+                        kullanilir.
+
+  sudo python pisichroot.py -A /var/baskacache/pisi/archives /home/test/paketdizini
+
+-P veya --pisiarsiv   : Sisteme kurulacak olan pisi paketleri icin cache
+                        dizinini belirmek icin kullanilir.  Belirtilmezse
+                        /etc/pisi/pisi.conf icinde belirtilen deger kullanilir.
+
+-p veya --pspecdizini : Derlenecek olan paketin pspec.xml ve diger dosyalarinin
+                        bulundugu dizin.
+
+Kullanimi:
+
+sudo python pisichroot.py -A /kaynakarsivi -P /pisiarsivi -p /home/test/Pisi/xpaketi
+
+"""
+
+    dizi = {}
+
+    dizi['arsiv']       = pisiconf.directories.cache_root_dir
+    dizi['kaynakarsiv'] = "%s/archives" % dizi['arsiv']
+    dizi['pisiarsiv']   = "%s/packages" % dizi['arsiv']
+    dizi['pspecdizini'] = ""
+    params, kalan = getopt.getopt(sys.argv[1:], 'hyA:P:p:' , \
+                                  ['help','yardim','kaynakarsiv=','pisiarsiv=', 'pspecdizini=, '])
+
+
+    #https://raw.githubusercontent.com/pisilinux/PisiLinux/master/pisi-index.xml
+
+
+    for secenek, arguman in params:
+        if secenek in ('-h','-y','--help','--yardim'):
+            print yardim
+            sys.exit()
+        if secenek in ('-p', '--pspecdizini'):
+            dizi['pspecdizini'] = arguman
+        if secenek in ('-A', '--kaynakarsiv'):
+            dizi['kaynakarsiv'] = arguman
+
+        if secenek in ('-P', '--pisiarsiv'):
+            dizi['pisiarsiv'] = arguman
+
+    for opt, arg in dizi.items():
+        print opt, arg
+
+    sys.exit()
     x = RootFS(sys.argv[1])
     x.addpkg(sys.argv[1])
     x.findDeps("BuildDependencies", True)
