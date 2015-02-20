@@ -1,8 +1,10 @@
 import os, sys, uuid, syslog, subprocess, glob
 import time
+global repolar
 try:
     from iniparse import INIConfig
     pisiconf = INIConfig(open('/etc/pisi/pisi.conf'))
+    repolar = INIConfig(open('pisichroot.conf'))
 except:
     print "python-iniparse pisi paketini kurunuz\nPlease install python-iniparse."
     sys.exit()
@@ -14,23 +16,28 @@ Used the script above.
 
 global CACHEDIR
 CACHEDIR= "/var/cache/pisi/packages"
-BASE = "colord dconf gtk3 zlib-32bit gc mpfr libunwind elfutils gmp libgomp openldap-client gnutls utempter python-psutil"
+BASE = "xz colord dconf gtk3 zlib-32bit gc mpfr libunwind elfutils gmp libgomp openldap-client gnutls utempter python-psutil"
 #BASE = "elfutils libgomp openldap-client gnutls utempter"
+sourcerepo = "https://github.com/pisilinux/PisiLinux/raw/master/pisi-index.xml.xz"
 
 
 def repoBul():
-    cmd = "pisi lr | grep -v '\[inactive' "
+    cmd = "pisi lr "
     lines = os.popen(cmd, "r").readlines()
     inactive = False
+    resp = []
     for line in lines:
-        if inactive == True:
-            inactive = False
-            continue
+        if line.find("http") > -1:
+            if inactive == False:
+                resp.append(line.strip())
+
         if line.find("[inactive") > -1:
             inactive = True
-        if inactive 
-repoBul()
-sys.exit()
+
+        if line.find("[active") > -1:
+            inactive = False
+    return resp
+
 
 class PisiPackage:
     """
@@ -45,7 +52,6 @@ class PisiPackage:
         if self.filename == False:
             self.retrieve(pname)
             self.filename = self.findInCache(pname)
-
 
     def checkFile(self, fname, pname):
         n = fname.split("/")[-1]
@@ -140,15 +146,17 @@ class Packages:
         self.packages[name] = PisiPackage(name)
 
 class RootFS:
-    def __init__(self, params,pkgdir):
+    def __init__(self, params):
         pkgdir = params['pspecdizini']
         if pkgdir[-1] == "/":
             pkgdir = pkgdir[:-1]
+        self.sourcerepo = params['sourcerepo']
         self.pkgdir = pkgdir.split("/")[-1]
         self.base = Packages(liststr = BASE)
         self.buildDeps = Packages()
-        self.repo = "http://farm.pisilinux.org/.nofarm-repo/x86_64/pisi-index.xml.xz"
-        self.cache = "/var/cache/pisi/packages"
+        self.repo = params['pisirepo']
+        self.cache = params['pisiarsiv']
+        self.codecache = params['kaynakarsiv']
         os.system("mkdir -p %s" % self.cache)
         self.rootdir = "/var/pisi/rootfs-%s" % self.pkgdir
 
@@ -170,12 +178,22 @@ class RootFS:
         self.runCommand("dbus-daemon --system")
         self.runCommand("chmod o+x /usr/lib/dbus-1.0/dbus-daemon-launch-helper")
         self.runCommand("pisi configure-pending")
+        self.buildpkg()
+
+    def buildpkg(self):
+        cmd = "pisi bi %s" % self.pkgdir
+        self.runCommand(cmd)
 
     def mknods(self):
         self.runCommand("mknod /dev/console c 5 1")
         self.runCommand("mknod /dev/null c 1 3")
         self.runCommand("mknod /dev/random c 1 8")
         self.runCommand("mknod /dev/urandom c 1 9")
+        self.runCommand("cat /etc/resolv.conf")
+        self.runCommand("/usr/sbin/update-ca-certificates")
+        cmd = "pisi ar github  %s  " % ( self.sourcerepo)
+        print cmd
+        self.runCommand(cmd)
         cmd = "pisi up -dvys"
         self.runCommand(cmd)
 
@@ -207,8 +225,8 @@ class RootFS:
 
         cmd = "pisi it -c system.base -y --ignore-comar -D %s" % self.rootdir
         os.system(cmd)
-        cmd = "pisi it -c system.devel -y --ignore-comar -D %s" % self.rootdir
-        os.system(cmd)
+        #cmd = "pisi it -c system.devel -y --ignore-comar -D %s" % self.rootdir
+        #os.system(cmd)
 
 
 
@@ -258,6 +276,7 @@ class RootFS:
 
 if __name__ == "__main__":
     import getopt
+    repos = repoBul()
 
     helpstr = """
 Arguments:
@@ -265,8 +284,15 @@ Arguments:
 -y, --yardim         : This help screen in Turkish
 
 -h, --help           : This help screen in English
--A, --source-archive :
+-A, --source-archive : Archive directory where the source codes for the packages
+                       are downloaded. Default value is used from /etc/pisi/pisi.conf
+
+sudo python pisichroot.py -A /var/othercache/pisi/archives /home/test/pspec-dir
+
+TODO: finish english part of help
+
 """
+
     yardim = """
 Argumanlar:
 ---------------------------
@@ -294,38 +320,42 @@ sudo python pisichroot.py -A /kaynakarsivi -P /pisiarsivi -p /home/test/Pisi/xpa
 """
 
     dizi = {}
-
+    dizi['sourcerepo'] = repolar.default.source_repo_url
+    dizi['pisirepo'] = repolar.default.package_repo_url
     dizi['arsiv']       = pisiconf.directories.cache_root_dir
     dizi['kaynakarsiv'] = "%s/archives" % dizi['arsiv']
     dizi['pisiarsiv']   = "%s/packages" % dizi['arsiv']
     dizi['pspecdizini'] = ""
     params, kalan = getopt.getopt(sys.argv[1:], 'hyA:P:p:' , \
-                                  ['help','yardim','kaynakarsiv=','pisiarsiv=', 'pspecdizini=, '])
+                                  ['help','yardim','kaynakarsiv=','pisiarsiv=', 'pspecdizini='])
 
 
     #https://raw.githubusercontent.com/pisilinux/PisiLinux/master/pisi-index.xml
 
 
     for secenek, arguman in params:
-        if secenek in ('-h','-y','--help','--yardim'):
+        if secenek in ('-y','--yardim'):
             print yardim
             sys.exit()
+        if secenek in ('-h','--help'):
+            print helpstr
+            sys.exit()
+
         if secenek in ('-p', '--pspecdizini'):
             dizi['pspecdizini'] = arguman
+
         if secenek in ('-A', '--kaynakarsiv'):
             dizi['kaynakarsiv'] = arguman
 
         if secenek in ('-P', '--pisiarsiv'):
             dizi['pisiarsiv'] = arguman
 
+
     for opt, arg in dizi.items():
         print opt, arg
 
-    sys.exit()
-    x = RootFS(sys.argv[1])
-    x.addpkg(sys.argv[1])
-    x.findDeps("BuildDependencies", True)
-    x.findDeps("RuntimeDependencies", True)
-
-    x.runCommand("pisi  --ignore-action-errors --ignore-safety bi   /root/pkg/pspec.xml")
+    x = RootFS(dizi)
+    #x.findDeps("BuildDependencies", True)
+    #x.findDeps("RuntimeDependencies", True)
+    #x.runCommand("pisi  --ignore-action-errors --ignore-safety bi   /root/pkg/pspec.xml")
     x.clean()
