@@ -16,8 +16,8 @@ Used the script above.
 
 global CACHEDIR
 CACHEDIR= "/var/cache/pisi/packages"
-BASE = "xz colord dconf gtk3 zlib-32bit gc mpfr libunwind elfutils gmp libgomp openldap-client gnutls utempter python-psutil"
-DEVEL = "make cmake autogen catbox gcc binutils bison nasm m4 autoconf automake libtool"
+BASE = "xz colord dconf gtk3  gc mpfr libunwind elfutils gmp libgomp openldap-client gnutls utempter python-psutil"
+DEVEL = "make cmake autogen catbox gcc glibc glibc-devel kernel-headers binutils bison nasm m4 autoconf automake libtool"
 
 sourcerepo = "https://github.com/pisilinux/PisiLinux/raw/master/pisi-index.xml.xz"
 
@@ -171,7 +171,9 @@ class RootFS:
         print self.rootdir
         os.system("mkdir -p %s" % self.rootdir)
         self.pisipackages = glob.glob("%s/*" % self.cache)
-        self.mounts = ["/proc", "/sys", "/var/cache/pisi/packages"]
+        self.mounts = ["/proc", "/sys"]
+        self.mounts.append(self.cache)
+        self.mounts.append(self.codecache)
         self.links = []
         self.mountDirs()
         self.symlinks()
@@ -198,7 +200,7 @@ class RootFS:
             if self.debug == True:
                 cmd = "pisi bi -y -d  %s " % self.target
             if self.debug == False:
-                cmd = "pisi bi -y %s " % self.target
+                cmd = "pisi bi -y %s" % self.target
             self.runCommand(cmd)
 
     def mknods(self):
