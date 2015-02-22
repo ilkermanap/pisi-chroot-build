@@ -17,7 +17,8 @@ Used the script above.
 global CACHEDIR
 CACHEDIR= "/var/cache/pisi/packages"
 BASE = "xz colord dconf gtk3 zlib-32bit gc mpfr libunwind elfutils gmp libgomp openldap-client gnutls utempter python-psutil"
-#BASE = "elfutils libgomp openldap-client gnutls utempter"
+DEVEL = "make cmake autogen catbox gcc binutils bison nasm m4 autoconf automake libtool"
+
 sourcerepo = "https://github.com/pisilinux/PisiLinux/raw/master/pisi-index.xml.xz"
 
 
@@ -84,7 +85,6 @@ class PisiPackage:
         #
         files = glob.glob("%s/%s-[0-9]*" % (CACHEDIR, name))
         if len(files) > 0:
-            print files[-1], name
             #inf = os.popen("pisi info %s" % files[-1]).readlines()
             #print inf[1]
             latest = files[-1]
@@ -145,21 +145,28 @@ class Packages:
     def addPackage(self, name):
         self.packages[name] = PisiPackage(name)
 
+    def install(self, basedir, ignoredep = False):
+        for pn, pkg in self.packages.items():
+            pkg.install(basedir, ignoredep)
+
 class RootFS:
     def __init__(self, params):
-        pkgdir = params['pspecdizini']
-        if pkgdir[-1] == "/":
-            pkgdir = pkgdir[:-1]
+        self.devel = Packages(DEVEL)
+        self.debug = params["debug"]
+        self.method = params['method']
+
+        self.target = params['hedef']
         self.sourcerepo = params['sourcerepo']
-        self.pkgdir = pkgdir.split("/")[-1]
+        self.packagename = self.target.replace("/pspec.xml", "").split("/")[-1]
         self.base = Packages(liststr = BASE)
         self.buildDeps = Packages()
         self.repo = params['pisirepo']
         self.cache = params['pisiarsiv']
         self.codecache = params['kaynakarsiv']
         os.system("mkdir -p %s" % self.cache)
-        self.rootdir = "/var/pisi/rootfs-%s" % self.pkgdir
-
+        self.rootdir = "/var/pisi/rootfs-%s" % self.packagename
+        if self.method == "dizin":
+            self.addpkg(self.target)
         self.pisicmd = "pisi it --ignore-comar --ignore-safety -D %s/ -y" % self.rootdir
         print self.rootdir
         os.system("mkdir -p %s" % self.rootdir)
@@ -181,8 +188,18 @@ class RootFS:
         self.buildpkg()
 
     def buildpkg(self):
-        cmd = "pisi bi %s" % self.pkgdir
-        self.runCommand(cmd)
+        if self.method == "dizin":
+            if self.debug == True:
+                cmd = "pisi bi -y -d /root/pkg/pspec.xml"
+            if self.debug == False:
+                cmd = "pisi bi -y /root/pkg/specc.xml"
+            self.runCommand(cmd)
+        else:
+            if self.debug == True:
+                cmd = "pisi bi -y -d  %s " % self.target
+            if self.debug == False:
+                cmd = "pisi bi -y %s " % self.target
+            self.runCommand(cmd)
 
     def mknods(self):
         self.runCommand("mknod /dev/console c 5 1")
@@ -192,7 +209,6 @@ class RootFS:
         self.runCommand("cat /etc/resolv.conf")
         self.runCommand("/usr/sbin/update-ca-certificates")
         cmd = "pisi ar github  %s  " % ( self.sourcerepo)
-        print cmd
         self.runCommand(cmd)
         cmd = "pisi up -dvys"
         self.runCommand(cmd)
@@ -207,10 +223,8 @@ class RootFS:
             filename = "%s/%s" % (newpath,filename.split("/")[-1])
 
         pathcmd = "mkdir -p %s/%s" % (self.rootdir, path)
-        print "pathcmd = ", pathcmd
         os.system(pathcmd)
         cmd = "cp %s %s/%s" % (oldname, self.rootdir, filename)
-        print "copy cmd = ", cmd
         os.system(cmd)
 
     def copyFiles(self):
@@ -225,10 +239,7 @@ class RootFS:
 
         cmd = "pisi it -c system.base -y --ignore-comar -D %s" % self.rootdir
         os.system(cmd)
-        #cmd = "pisi it -c system.devel -y --ignore-comar -D %s" % self.rootdir
-        #os.system(cmd)
-
-
+        self.devel.install(self.rootdir)
 
     def runCommand(self, cmd):
         os.system("chroot %s  %s" % (self.rootdir, cmd) )
@@ -261,7 +272,6 @@ class RootFS:
         if len(alldeps) > 0:
             deps = alldeps[0].getElementsByTagName("Dependency")
             for d in deps:
-                print d.toxml()
                 deppkg = d.toxml().split(">")[1].split("<")[0]
                 self.buildDeps.addPackage(deppkg)
 
@@ -270,7 +280,9 @@ class RootFS:
 
 
     def addpkg(self, pkgdir):
-        cmd = "cp -r %s/* %s/root/pkg/." % (pkgdir, self.rootdir)
+        if pkgdir.find("pspec.xml") > -1:
+            dr = pkgdir[:pkgdir.rfind("/")]
+        cmd = "cp -r %s/* %s/root/pkg/." % (dr, self.rootdir)
         os.system("mkdir -p %s/root/pkg" % self.rootdir)
         os.system(cmd)
 
@@ -310,28 +322,45 @@ Argumanlar:
                         dizinini belirmek icin kullanilir.  Belirtilmezse
                         /etc/pisi/pisi.conf icinde belirtilen deger kullanilir.
 
--p veya --pspecdizini : Derlenecek olan paketin pspec.xml ve diger dosyalarinin
-                        bulundugu dizin.
+-p veya --paketadi    : Derlenecek olan paketin adi.  wget gibi
+
+-d veya --dizin       : Derlenecek olan paketin pspec.xml dosyasinin yerini gosteren
+                        tam dosya yolu
+
+                        /home/test/Pisilinux/main/network/wget/pspec.xml
+
+-u veya --url         : Derlenecek olan paketin pspec.xml dosyasinin yerini gosteren
+                        tam dosya yolu
+
+                       https://github.com/Pisilinux/main/network/wget/pspec.xml
+
+-d veya --debug       : Pisi komutu debug ozelligi , on veya off
 
 Kullanimi:
 
-sudo python pisichroot.py -A /kaynakarsivi -P /pisiarsivi -p /home/test/Pisi/xpaketi
+sudo python pisichroot.py -A /kaynakarsivi -P /pisiarsivi -d /home/test/Pisi/wget/pspec.xml -d off
+
+sudo python pisichroot.py -A /kaynakarsivi -P /pisiarsivi -p wget -d on
+
+sudo python pisichroot.py -A /kaynakarsivi -P /pisiarsivi -p https://github.com/developer/paket/pspec.xml
 
 """
 
     dizi = {}
+    dizi["debug"] = True
     dizi['sourcerepo'] = repolar.default.source_repo_url
     dizi['pisirepo'] = repolar.default.package_repo_url
     dizi['arsiv']       = pisiconf.directories.cache_root_dir
     dizi['kaynakarsiv'] = "%s/archives" % dizi['arsiv']
     dizi['pisiarsiv']   = "%s/packages" % dizi['arsiv']
     dizi['pspecdizini'] = ""
-    params, kalan = getopt.getopt(sys.argv[1:], 'hyA:P:p:' , \
-                                  ['help','yardim','kaynakarsiv=','pisiarsiv=', 'pspecdizini='])
-
+    params, kalan = getopt.getopt(sys.argv[1:], 'd:D:u:hyA:P:p:' , \
+                                  ['dizin=','debug=', 'url=','help','yardim','kaynakarsiv=','pisiarsiv=', 'paketadi='])
 
     #https://raw.githubusercontent.com/pisilinux/PisiLinux/master/pisi-index.xml
-
+    url = False
+    directory = False
+    pname = False
 
     for secenek, arguman in params:
         if secenek in ('-y','--yardim'):
@@ -341,18 +370,29 @@ sudo python pisichroot.py -A /kaynakarsivi -P /pisiarsivi -p /home/test/Pisi/xpa
             print helpstr
             sys.exit()
 
-        if secenek in ('-p', '--pspecdizini'):
-            dizi['pspecdizini'] = arguman
+        if secenek in ('-d', '--debug'):
+            if arguman == "on":
+                dizi["debug"] = True
+            elif arguman == "off":
+                dizi["debug"] = False
+
+        if secenek in ('-u', '--url'):
+            dizi["method"] = "url"
+            dizi["hedef"] = arguman
+
+        if secenek in ('-d', '--dizin'):
+            dizi['method'] = "dizin"
+            dizi["hedef"] = arguman
+
+        if secenek in ('-p', '--paketadi'):
+            dizi['method'] =  "paketadi"
+            dizi["hedef"] = arguman
 
         if secenek in ('-A', '--kaynakarsiv'):
             dizi['kaynakarsiv'] = arguman
 
         if secenek in ('-P', '--pisiarsiv'):
             dizi['pisiarsiv'] = arguman
-
-
-    for opt, arg in dizi.items():
-        print opt, arg
 
     x = RootFS(dizi)
     #x.findDeps("BuildDependencies", True)
