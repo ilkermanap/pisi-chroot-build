@@ -16,7 +16,7 @@ Used the script above.
 
 global CACHEDIR
 CACHEDIR= "/var/cache/pisi/packages"
-BASE = "xz colord dconf gtk3  gc mpfr libunwind elfutils gmp libgomp openldap-client gnutls utempter python-psutil"
+BASE = "gawk coreutils xz colord dconf gtk3  gc mpfr libunwind elfutils gmp libgomp openldap-client gnutls utempter python-psutil"
 DEVEL = "make cmake autogen catbox gcc glibc glibc-devel kernel-headers binutils bison nasm m4 autoconf automake libtool"
 
 sourcerepo = "https://github.com/pisilinux/PisiLinux/raw/master/pisi-index.xml.xz"
@@ -154,7 +154,6 @@ class RootFS:
         self.devel = Packages(DEVEL)
         self.debug = params["debug"]
         self.method = params['method']
-
         self.target = params['hedef']
         self.sourcerepo = params['sourcerepo']
         self.packagename = self.target.replace("/pspec.xml", "").split("/")[-1]
@@ -178,6 +177,7 @@ class RootFS:
         self.mountDirs()
         self.symlinks()
         self.installBase()
+        self.installDevel()
         self.copyFiles()
         self.mknods()
         self.runCommand("groupadd -g 18 messagebus")
@@ -190,17 +190,18 @@ class RootFS:
         self.buildpkg()
 
     def buildpkg(self):
+        pisi = "pisi "
         if self.method == "dizin":
             if self.debug == True:
-                cmd = "pisi bi -y -d /root/pkg/pspec.xml"
+                cmd = "%s bi -y -d /root/pkg/pspec.xml" % pisi
             if self.debug == False:
-                cmd = "pisi bi -y /root/pkg/specc.xml"
+                cmd = "%s bi -y /root/pkg/specc.xml" % pisi
             self.runCommand(cmd)
         else:
             if self.debug == True:
-                cmd = "pisi bi -y -d  %s " % self.target
+                cmd = "%s bi -y -d  %s " % (pisi, self.target)
             if self.debug == False:
-                cmd = "pisi bi -y %s" % self.target
+                cmd = "%s bi -y %s" % (pisi, self.target)
             self.runCommand(cmd)
 
     def mknods(self):
@@ -208,6 +209,11 @@ class RootFS:
         self.runCommand("mknod /dev/null c 1 3")
         self.runCommand("mknod /dev/random c 1 8")
         self.runCommand("mknod /dev/urandom c 1 9")
+        self.runCommand("mkdir -p /dev/pts")
+        self.runCommand("mknod /dev/pts/0 c 136 0")
+        self.runCommand("mknod /dev/pts/1 c 136 1")
+        self.runCommand("mknod /dev/pts/2 c 136 2")
+        self.runCommand("mknod /dev/pts/3 c 136 3")
         self.runCommand("cat /etc/resolv.conf")
         self.runCommand("/usr/sbin/update-ca-certificates")
         cmd = "pisi ar github  %s  " % ( self.sourcerepo)
@@ -241,7 +247,14 @@ class RootFS:
 
         cmd = "pisi it -c system.base -y --ignore-comar -D %s" % self.rootdir
         os.system(cmd)
-        self.devel.install(self.rootdir)
+        #self.devel.install(self.rootdir)
+
+    def installDevel(self, fromList = False):
+        if fromList == True:
+            self.devel.install(self.rootdir)
+        else:
+            cmd = "pisi it -c system.devel -y --ignore-comar -D %s" % self.rootdir
+            os.system(cmd)
 
     def runCommand(self, cmd):
         os.system("chroot %s  %s" % (self.rootdir, cmd) )
