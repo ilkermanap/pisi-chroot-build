@@ -17,6 +17,8 @@ To see the English help  python pisichroot.py -h
 
 
 sudo python pisichroot.py -A source_archive_dir   -P package_archive_dir  -d /home/test/Pisi/wget/pspec.xml -D off
+
 sudo python pisichroot.py -p wget
+
 sudo python pisichroot.py  -u https://github.com/developer/paket/pspec.xml
 
