@@ -195,7 +195,7 @@ class RootFS:
             if self.debug == True:
                 cmd = "%s bi -y -d /root/pkg/pspec.xml" % pisi
             if self.debug == False:
-                cmd = "%s bi -y /root/pkg/specc.xml" % pisi
+                cmd = "%s bi -y /root/pkg/pspec.xml" % pisi
             self.runCommand(cmd)
         else:
             if self.debug == True:
@@ -349,15 +349,15 @@ Argumanlar:
 
                        https://github.com/Pisilinux/main/network/wget/pspec.xml
 
--d veya --debug       : Pisi komutu debug ozelligi , on veya off
+-D veya --debug       : Pisi komutu debug ozelligi , on veya off
 
 Kullanimi:
 
-sudo python pisichroot.py -A /kaynakarsivi -P /pisiarsivi -d /home/test/Pisi/wget/pspec.xml -d off
+sudo python pisichroot.py -A /kaynakarsivi -P /pisiarsivi -d /home/test/Pisi/wget/pspec.xml -D off
 
-sudo python pisichroot.py -A /kaynakarsivi -P /pisiarsivi -p wget -d on
+sudo python pisichroot.py -A /kaynakarsivi -P /pisiarsivi -p wget -D on
 
-sudo python pisichroot.py -A /kaynakarsivi -P /pisiarsivi -p https://github.com/developer/paket/pspec.xml
+sudo python pisichroot.py -A /kaynakarsivi -P /pisiarsivi -u https://github.com/developer/paket/pspec.xml
 
 """
 
@@ -385,7 +385,7 @@ sudo python pisichroot.py -A /kaynakarsivi -P /pisiarsivi -p https://github.com/
             print helpstr
             sys.exit()
 
-        if secenek in ('-d', '--debug'):
+        if secenek in ('-D', '--debug'):
             if arguman == "on":
                 dizi["debug"] = True
             elif arguman == "off":
