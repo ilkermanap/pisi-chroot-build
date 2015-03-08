@@ -1,5 +1,7 @@
 import os, sys, uuid, syslog, subprocess, glob
 import time
+from kayit import Kayit
+
 global repolar
 try:
     from iniparse import INIConfig
@@ -100,7 +102,7 @@ class PisiPackage:
         os.system("pisi fc %s" % name)
         os.chdir(currpath)
 
-    def install(self, basedir, ignoredep = False):
+    def install(self, basedir, logger, ignoredep = False):
         """
         Install the package
 
@@ -118,8 +120,9 @@ class PisiPackage:
         if ignoredep == True:
             cmd += " --ignore-dep"
         cmd += " -D %s -y %s  " % (basedir, self.filename)
-        print cmd
-        os.system(cmd)
+        x = os.popen(cmd, "r").readlines()
+        logger.mesaj(x)
+
 
 class Packages:
     """
@@ -145,9 +148,13 @@ class Packages:
     def addPackage(self, name):
         self.packages[name] = PisiPackage(name)
 
-    def install(self, basedir, ignoredep = False):
+    def install(self, basedir, logger, ignoredep = False):
         for pn, pkg in self.packages.items():
-            pkg.install(basedir, ignoredep)
+            pkg.install(basedir, logger,  ignoredep)
+
+class run:
+    def __init__(self, cmd):
+        self.cmd = cmd
 
 class RootFS:
     def __init__(self, params):
@@ -157,18 +164,21 @@ class RootFS:
         self.target = params['hedef']
         self.sourcerepo = params['sourcerepo']
         self.packagename = self.target.replace("/pspec.xml", "").split("/")[-1]
+        self.pisilog = Kayit("%s-pisi.log" % self.packagename)
+        self.chrootlog = Kayit("%s-chroot.log" % self.packagename)
+        self.chrootlog.mesaj(params)
         self.base = Packages(liststr = BASE)
         self.buildDeps = Packages()
         self.repo = params['pisirepo']
         self.cache = params['pisiarsiv']
         self.codecache = params['kaynakarsiv']
-        os.system("mkdir -p %s" % self.cache)
+        self.runOutside("mkdir -p %s" % self.cache)
         self.rootdir = "/var/pisi/rootfs-%s" % self.packagename
         if self.method == "dizin":
             self.addpkg(self.target)
         self.pisicmd = "pisi it --ignore-comar --ignore-safety -D %s/ -y" % self.rootdir
         print self.rootdir
-        os.system("mkdir -p %s" % self.rootdir)
+        self.runOutside("mkdir -p %s" % self.rootdir)
         self.pisipackages = glob.glob("%s/*" % self.cache)
         self.mounts = ["/proc", "/sys"]
         self.mounts.append(self.cache)
@@ -186,23 +196,25 @@ class RootFS:
         self.runCommand("dbus-uuidgen --ensure")
         self.runCommand("dbus-daemon --system")
         self.runCommand("chmod o+x /usr/lib/dbus-1.0/dbus-daemon-launch-helper")
-        self.runCommand("pisi configure-pending")
+        self.runCommand("pisi configure-pending", True)
         self.buildpkg()
 
+
+
     def buildpkg(self):
-        pisi = "pisi "
+        pisi = "pisi --ignore-safety"
         if self.method == "dizin":
             if self.debug == True:
                 cmd = "%s bi -y -d /root/pkg/pspec.xml" % pisi
             if self.debug == False:
                 cmd = "%s bi -y /root/pkg/pspec.xml" % pisi
-            self.runCommand(cmd)
+            self.runCommand(cmd, True)
         else:
             if self.debug == True:
                 cmd = "%s bi -y -d  %s " % (pisi, self.target)
             if self.debug == False:
                 cmd = "%s bi -y %s" % (pisi, self.target)
-            self.runCommand(cmd)
+            self.runCommand(cmd, True)
 
     def mknods(self):
         self.runCommand("mknod /dev/console c 5 1")
@@ -214,12 +226,11 @@ class RootFS:
         self.runCommand("mknod /dev/pts/1 c 136 1")
         self.runCommand("mknod /dev/pts/2 c 136 2")
         self.runCommand("mknod /dev/pts/3 c 136 3")
-        self.runCommand("cat /etc/resolv.conf")
         self.runCommand("/usr/sbin/update-ca-certificates")
         cmd = "pisi ar github  %s  " % ( self.sourcerepo)
-        self.runCommand(cmd)
+        self.runCommand(cmd, True)
         cmd = "pisi up -dvys"
-        self.runCommand(cmd)
+        self.runCommand(cmd, True)
 
     def copyFile(self, filename, newpath = ""):
         if newpath ==  "":
@@ -231,57 +242,76 @@ class RootFS:
             filename = "%s/%s" % (newpath,filename.split("/")[-1])
 
         pathcmd = "mkdir -p %s/%s" % (self.rootdir, path)
-        os.system(pathcmd)
+        self.runOutside(pathcmd)
         cmd = "cp %s %s/%s" % (oldname, self.rootdir, filename)
-        os.system(cmd)
+        self.runOutside(cmd)
 
     def copyFiles(self):
-        os.system("cp /usr/share/baselayout/* %s/etc/." % self.rootdir)
+        cmd = "cp /usr/share/baselayout/* %s/etc/." % self.rootdir
+        self.runOutside(cmd)
         self.copyFile("/etc/resolv.conf")
 
     def installBase(self):
         cmd = "pisi ar farm -D %s %s" % (self.rootdir, self.repo)
-        os.system(cmd)
+        self.runOutside(cmd, True)
         for pkgname, pkg in self.base.packages.items():
-            pkg.install(self.rootdir, True)
+            pkg.install(self.rootdir, self.pisilog, True)
 
         cmd = "pisi it -c system.base -y --ignore-comar -D %s" % self.rootdir
-        os.system(cmd)
-        #self.devel.install(self.rootdir)
+        self.runOutside(cmd, True)
 
-    def installDevel(self, fromList = False):
+
+    def installDevel(self, fromList = True):
         if fromList == True:
-            self.devel.install(self.rootdir)
+            self.devel.install(self.rootdir, self.pisilog)
         else:
             cmd = "pisi it -c system.devel -y --ignore-comar -D %s" % self.rootdir
-            os.system(cmd)
+            self.runOutside(cmd, True)
 
-    def runCommand(self, cmd):
-        os.system("chroot %s  %s" % (self.rootdir, cmd) )
+
+    def runOutside(self, cmd, pisilog = False):
+        x = os.popen(cmd,"r").readlines()
+        if pisilog == True:
+            self.pisilog.mesaj("chroot disinda calisacak : (%s) " % cmd)
+            self.pisilog.mesaj(x)
+        else:
+            self.chrootlog.mesaj("chroot disinda calisacak : (%s) " % cmd)
+            self.chrootlog.mesaj(x)
+
+    def runCommand(self, cmd, pisilog = False):
+        cmd = "chroot %s  %s" % (self.rootdir, cmd)
+        x = os.popen(cmd,"r").readlines()
+        if pisilog == True:
+            self.pisilog.mesaj("chroot icinde calisacak : (%s) " % cmd)
+            self.pisilog.mesaj(x)
+        else:
+            self.chrootlog.mesaj("chroot icinde calisacak : (%s) " % cmd)
+            self.chrootlog.mesaj(x)
+
 
     def symlinks(self):
         for link in self.links:
-            os.system("mkdir -p %s%s" % (self.rootdir, link[:link.rfind("/")]))
+            self.runOutside("mkdir -p %s%s" % (self.rootdir, link[:link.rfind("/")]))
             cmd = "ln -s %s %s%s" % (link, self.rootdir, link[:link.rfind("/")])
-            os.system(cmd)
+            self.runOutside(cmd)
 
 
     def mountDirs(self, umount = False):
         if umount == False:
             for m in self.mounts:
-                os.system("mkdir -p %s%s" % (self.rootdir, m))
-                os.system("mount --bind %s %s%s" % (m, self.rootdir, m))
+                self.runOutside("mkdir -p %s%s" % (self.rootdir, m))
+                self.runOutside("mount --bind %s %s%s" % (m, self.rootdir, m))
         else:
             for m in self.mounts:
-                os.system("umount  %s%s" % (self.rootdir, m))
+                self.runOutside("umount  %s%s" % (self.rootdir, m))
 
     def clean(self):
         self.mountDirs(umount = True)
+        self.runOutside("cp %s/*.pisi ." % self.rootdir)
+        self.runOutside("cp %s/root/pkg/*.pisi ." % self.rootdir)
 
     def findDeps(self, tag, ignoreDep = False):
-
         from xml.dom import minidom
-
         pspec = minidom.parse("%s/root/pkg/pspec.xml" % self.rootdir)
         alldeps = pspec.getElementsByTagName(tag)
         if len(alldeps) > 0:
@@ -298,8 +328,8 @@ class RootFS:
         if pkgdir.find("pspec.xml") > -1:
             dr = pkgdir[:pkgdir.rfind("/")]
         cmd = "cp -r %s/* %s/root/pkg/." % (dr, self.rootdir)
-        os.system("mkdir -p %s/root/pkg" % self.rootdir)
-        os.system(cmd)
+        self.runOutside("mkdir -p %s/root/pkg" % self.rootdir)
+        self.runOutside(cmd)
 
 if __name__ == "__main__":
     import getopt
