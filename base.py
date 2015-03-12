@@ -217,7 +217,7 @@ if (__name__ == "__main__"):
     I = Index("http://farm.pisilinux.org/.nofarm-repo/x86_64/pisi-index.xml.xz")
     x = Chroot(sys.argv[1], sys.argv[2], I)
     x.addRepo("farm", "http://farm.pisilinux.org/.nofarm-repo/x86_64/pisi-index.xml.xz")
-    #x.addRepo("source","https://github.com/pisilinux/PisiLinux/raw/master/pisi-index.xml.xz")
+    x.addRepo("source","https://github.com/ertugerata/PisiLinux/raw/Pisi-2.0/pisi-index.xml.xz")
     x.buildpkg(sys.argv[3])
 
 
