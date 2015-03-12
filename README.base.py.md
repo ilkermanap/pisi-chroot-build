@@ -24,6 +24,11 @@ edebilmektir.
 Bu uygulamanin calismasi icin pisilinux sistem gerekmemektedir.
 Herhangi bir linux dagitiminda kullanabilirsiniz. 
 
+pspec.xml dosyası ile çalışmak için lxml kullanıldığı için sisteminize uygun lxml i kurmanız gerekmektedir. 
+PisiLinux için;
+
+sudo pisi it python-lxml
+
 Calisma dizininizde paket adinda bir dizin olusturun.
 paketler.txt dosyasinin icinde bulunan pisi paketlerini olusturdugunuz
 paket dizini icine kopyalayin. Bu paketler minimum calisma ve derleme 
