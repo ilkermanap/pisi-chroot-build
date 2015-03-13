@@ -24,10 +24,9 @@ edebilmektir.
 Bu uygulamanin calismasi icin pisilinux sistem gerekmemektedir.
 Herhangi bir linux dagitiminda kullanabilirsiniz. 
 
-pspec.xml dosyası ile çalışmak için lxml kullanıldığı için sisteminize uygun lxml i kurmanız gerekmektedir. 
-PisiLinux için;
-
-sudo pisi it python-lxml
+pspec.xml dosyası ile çalışmak için lxml kullanıldığı için sisteminize uygun lxml'i kurmanız gerekmektedir. 
+- PisiLinux için;
+`sudo pisi it python-lxml`
 
 Calisma dizininizde paket adinda bir dizin olusturun.
 paketler.txt dosyasinin icinde bulunan pisi paketlerini olusturdugunuz
@@ -39,15 +38,15 @@ Uygulama icinde, farm binary deposu ve github kaynak deposu eklenmektedir.
 
 Ornegin acl paketini derlemek icin:
 
-  sudo python base.py  chroot-dizin-adi kurulacak-paket-txt-listesi  paket-adi
+  `sudo python base.py  chroot-dizin-adi kurulacak-paket-txt-listesi  paket-adi`
 
-  sudo python base.py  acl-chroot paketler.txt acl 
+  `sudo python base.py  acl-chroot paketler.txt acl`
 
  
 Yukaridaki komut, bulundugumuz dizinde paket alt dizininde bulunan pisi paketlerini 
 kullanarak, acl-chroot dizinine chroot ortamini olusturur. Ardindan,  
 
-   pisi --ignore-safety -y bi acl 
+   `pisi --ignore-safety -y bi acl ` 
 
 komutunu calistirir.
 
