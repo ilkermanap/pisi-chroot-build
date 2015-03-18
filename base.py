@@ -17,10 +17,9 @@ class Index:
 
     def checkHash(self):
         import urllib2
-        #http://farm.pisilinux.org/.nofarm-repo/x86_64/pisi-index.xml.xz        
         if os.path.exists("index.sha1sum"):
             yeniHash = urllib2.urlopen("%s.sha1sum" % self.url).readlines()[0]
-            eskihash = open("index.sha1sum").readlines()[0]
+            eskiHash = open("index.sha1sum").readlines()[0]
             if yeniHash.strip() != eskiHash.strip():
                 self.retrieve()
                 f = open("index.sha1sum","w")
