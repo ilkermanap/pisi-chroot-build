@@ -38,10 +38,8 @@ class Index:
 
 
     def retrieve(self):
-        print "in retrieve"
         os.system("wget %s" % self.url)
         os.system("xz -d pisi-index.xml.xz")
-        sys.exit()
 
     def parse(self):
         from lxml import objectify as obj
