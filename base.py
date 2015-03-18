@@ -139,7 +139,7 @@ class Chroot:
         self.rootlog = Kayit("%s-root.log" % dizin)
         self.buildlog = Kayit("%s-build.log" % dizin)
         self.runOutside("rm -rf %s" % dizin)
-        self.runOutside("mkdir -p %s" % dizin)
+        self.runOutside("mkdir -p %s/root" % dizin)
         self.root = dizin
         self.mounts = ["/proc", "/sys"]
         self.mountDirs()
