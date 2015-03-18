@@ -213,7 +213,7 @@ class Chroot:
     def docker(self):
         arch = "x86_64"
         img = "pisi"
-        release = logtime()
+        release = logtime().replace(":","").replace("-","")
         imgtag = "%s-%s-%s" % (img ,arch, release)
         dockercmd = "tar --numeric-owner --xattrs --acls -C %s -c .  | docker import - %s " % (self.root, imgtag)
         tagcmd = "docker tag -f %s %s:latest" % (imgtag, img)
