@@ -15,6 +15,14 @@ class Index:
         self.content = open("pisi-index.xml").read()
         self.parse()
 
+    def cleanDocs(self):
+        if self.root !="":
+            self.runOutside("rm -rf %s/usr/share/man" % self.root)
+            self.runOutside("rm -rf %s/usr/share/doc" % self.root)
+            self.runOutside("rm -rf %s/usr/share/gtk-doc" % self.root)
+            self.runOutside("rm -rf %s/usr/share/locale/[a-d][f-z]*" % self.root)
+            self.runOutside("rm -rf %s/usr/share/locale/e[a-m,o-z]*" % self.root)
+
     def checkHash(self):
         import urllib2
         if os.path.exists("index.sha1sum"):
@@ -152,6 +160,17 @@ class Chroot:
         self.mknods()
         self.dbus()
         self.certificates()
+
+
+    def cleanDocs(self):
+        if self.root !="":
+            self.runOutside("rm -rf %s/usr/share/man" % self.root)
+            self.runOutside("rm -rf %s/usr/share/doc" % self.root)
+            self.runOutside("rm -rf %s/usr/share/gtk-doc" % self.root)
+            self.runOutside("rm -rf %s/usr/share/locale/[a-d][f-z]*" % self.root)
+            self.runOutside("rm -rf %s/usr/share/locale/e[a-m,o-z]*" % self.root)
+
+
         
     def dbus(self):
         #self.runOutside("mkdir -p %s/usr/lib/dbus-1.0/" % self.root)
@@ -234,6 +253,7 @@ class Chroot:
         release = logtime().replace(":","").replace("-","")
         imgtag = "%s-%s-%s" % (img ,arch, release)
         self.mountDirs(True)
+        self.cleanDocs()
         dockercmd = "tar --numeric-owner --xattrs --acls -C %s -c .  | docker import - %s " % (self.root, imgtag)
         tagcmd = "docker tag -f %s %s:latest" % (imgtag, img)
         self.runOutside(dockercmd)
