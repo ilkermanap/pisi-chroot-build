@@ -1,5 +1,5 @@
 import os, sys
-from kayit import Kayit
+from kayit import *
 
 ROOTFS=sys.argv[1]
 liste = open("paketler.txt").readlines()
@@ -162,10 +162,8 @@ class Chroot:
         self.runCommand("mknod -m 666 /dev/full c 1 7")
         self.runCommand("mknod -m 600 /dev/initctl p")
         self.runCommand("mknod -m 666 /dev/ptmx c 5 2")
-        self.runCommand("mknod /dev/pts/0 c 136 0")
-        self.runCommand("mknod /dev/pts/1 c 136 1")
-        self.runCommand("mknod /dev/pts/2 c 136 2")
-        self.runCommand("mknod /dev/pts/3 c 136 3")
+        for i in range(255):
+            self.runCommand("mknod /dev/pts/%d c 136 %d" % (i,i))
         self.runOutside("ln -sf /proc/self/fd %s/dev/fd" % self.root)
 
     def certificates(self):
@@ -211,6 +209,16 @@ class Chroot:
 
     def buildpkg(self, pkgname):
         self.runCommand("pisi -y  --ignore-safety bi %s" % pkgname)
+
+    def docker(self):
+        arch = "x86_64"
+        img = "pisi"
+        release = logtime()
+        imgtag = "%s-%s-%s" % (img ,arch, release)
+        dockercmd = "tar --numeric-owner --xattrs --acls -C %s -c .  | docker import - %s " % (self.root, imgtag)
+        tagcmd = "docker tag -f %s %s:latest" % (imgtag, img)
+        self.runOutside(dockercmd)
+        self.runOutside(tagcmd)
         
 if (__name__ == "__main__"):
     os.system("mkdir -p %s" % CACHE)
@@ -219,7 +227,8 @@ if (__name__ == "__main__"):
     x.addRepo("farm", "http://farm.pisilinux.org/.nofarm-repo/x86_64/pisi-index.xml.xz")
     x.addRepo("source","https://github.com/ertugerata/PisiLinux/raw/Pisi-2.0/pisi-index.xml.xz")
     #x.addRepo("source","/home/ertugrul/Works/PisiLinux/pisi-index.xml.xz")
-    x.buildpkg(sys.argv[3])
+    #x.buildpkg(sys.argv[3])
+    x.docker()
 
 
     
