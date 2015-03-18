@@ -215,6 +215,7 @@ class Chroot:
         img = "pisi"
         release = logtime().replace(":","").replace("-","")
         imgtag = "%s-%s-%s" % (img ,arch, release)
+        self.mountDirs(True)
         dockercmd = "tar --numeric-owner --xattrs --acls -C %s -c .  | docker import - %s " % (self.root, imgtag)
         tagcmd = "docker tag -f %s %s:latest" % (imgtag, img)
         self.runOutside(dockercmd)
