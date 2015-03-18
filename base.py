@@ -12,16 +12,11 @@ class Index:
         self.content = ""
         self.packages = {}
         self.checkHash()
-        self.content = open("pisi-index.xml").read()
+        try:
+            self.content = open("pisi-index.xml").read()
+        except:
+            self.retrieve()
         self.parse()
-
-    def cleanDocs(self):
-        if self.root !="":
-            self.runOutside("rm -rf %s/usr/share/man" % self.root)
-            self.runOutside("rm -rf %s/usr/share/doc" % self.root)
-            self.runOutside("rm -rf %s/usr/share/gtk-doc" % self.root)
-            self.runOutside("rm -rf %s/usr/share/locale/[a-d][f-z]*" % self.root)
-            self.runOutside("rm -rf %s/usr/share/locale/e[a-m,o-z]*" % self.root)
 
     def checkHash(self):
         import urllib2
@@ -43,9 +38,10 @@ class Index:
 
 
     def retrieve(self):
+        print "in retrieve"
         os.system("wget %s" % self.url)
         os.system("xz -d pisi-index.xml.xz")
-
+        sys.exit()
 
     def parse(self):
         from lxml import objectify as obj
