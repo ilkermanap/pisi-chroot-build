@@ -26,7 +26,13 @@ class Index:
                 f = open("index.sha1sum","w")
                 f.write(yeniHash)
                 f.close()
-                
+        else:
+            yeniHash = urllib2.urlopen("%s.sha1sum" % self.url).readlines()[0]
+            self.retrieve()
+            f = open("index.sha1sum","w")
+            f.write(yeniHash)
+            f.close()
+
 
 
     def retrieve(self):
