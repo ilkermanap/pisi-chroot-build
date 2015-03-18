@@ -231,7 +231,7 @@ class Chroot:
 
     def docker(self):
         arch = "x86_64"
-        img = "pisi"
+        img = "pisichroot"
         release = logtime().replace(":","").replace("-","")
         imgtag = "%s-%s-%s" % (img ,arch, release)
         self.mountDirs(True)
