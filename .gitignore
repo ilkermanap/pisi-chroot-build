@@ -2,3 +2,4 @@
 *.log
 paket/*
 .directory
+index.sha1sum
