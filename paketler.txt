@@ -18,7 +18,6 @@ urlgrabber
 baselayout
 acl
 audit
-pam
 shadow
 strace
 run-parts
@@ -38,7 +37,6 @@ binutils
 bison
 ca-certificates
 ccache
-cmake
 comar
 comar-api
 cpio
@@ -84,3 +82,6 @@ libtool-ltdl
 libunwind
 bzip2
 diffutils
+sed
+libsigsegv
+readline
