@@ -277,8 +277,6 @@ class Chroot:
             repo, pkg = self.index.package(paket)
             print "%s reposundan %s kuruluyor" % (repo, paket)
             pkg.install(self.root)
-        self.index.packages["busybox"].fetch()
-        Busybox("%s" % ( self.index.packages["busybox"].fname), self.root)
 
     def addRepo(self,name, url):
         self.runCommand("pisi ar %s %s" % (name, url))
