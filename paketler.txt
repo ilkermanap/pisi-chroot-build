@@ -1,5 +1,4 @@
 mudur
-p11-kit
 coreutils
 gzip
 libxml2
@@ -55,8 +54,7 @@ gcc
 gdbm
 gettext
 glib2
-gnutls
-iputils
+bash
 kernel-headers
 leveldb
 lzo
