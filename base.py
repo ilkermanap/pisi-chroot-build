@@ -168,19 +168,6 @@ class Paket:
     def clean(self):
         os.system("rm -rf comar; rm -f install.tar.xz; rm -f files.xml metadata.xml")
 
-class Busybox(Paket):
-    def unzip(self, target):
-        Paket.unzip(self, target)
-        symlinks = open("%s/bin/busybox.links" % target, "r").readlines()
-        for link in symlinks:
-            try:
-                path = link[:link.rfind("/")]
-                src = "/bin/busybox"
-                os.system("mkdir -p %s/%s" % (target, path))
-                os.symlink(src, "%s/%s" % (target, link[:-1]))
-            except:
-                pass
-
 class Chroot:
     def __init__(self, dizin, paketListesi, index):
         self.index = index
@@ -222,6 +209,10 @@ class Chroot:
             self.runOutside("rm -rf %s/usr/share/gtk-doc" % self.root)
             self.runOutside("rm -rf %s/usr/share/locale/[a-d][f-z]*" % self.root)
             self.runOutside("rm -rf %s/usr/share/locale/e[a-m,o-z]*" % self.root)
+            self.runCommand("rm -rf /var/cache/pisi/packages/*")
+            self.runCommand("rm -rf /var/cache/pisi/archives/*")
+            self.runCommand("rm -rf /var/run/dbus/pid")
+
 
     def dbus(self):
         #self.runOutside("mkdir -p %s/usr/lib/dbus-1.0/" % self.root)
