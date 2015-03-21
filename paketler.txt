@@ -1,5 +1,5 @@
-gawk
 mudur
+p11-kit
 coreutils
 gzip
 libxml2
@@ -11,7 +11,6 @@ mpfr
 libmpc
 gnuconfig
 catbox
-pam
 libssh2
 libidn
 libcap
@@ -20,8 +19,7 @@ urlgrabber
 baselayout
 acl
 audit
-readline
-libsigsegv
+pam
 shadow
 strace
 run-parts
@@ -41,6 +39,7 @@ binutils
 bison
 ca-certificates
 ccache
+cmake
 comar
 comar-api
 cpio
@@ -56,9 +55,8 @@ gcc
 gdbm
 gettext
 glib2
-findutils
-sed
-bash
+gnutls
+iputils
 kernel-headers
 leveldb
 lzo
@@ -88,3 +86,4 @@ libtool-ltdl
 libunwind
 bzip2
 diffutils
+
