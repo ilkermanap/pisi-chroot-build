@@ -2,4 +2,5 @@
 *.log
 paket/*
 .directory
-index.sha1sum
+*.sha1sum
+*.pisi-index.xml
