@@ -87,3 +87,4 @@ diffutils
 findutils
 sed
 bash
+gawk
