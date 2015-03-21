@@ -1,5 +1,4 @@
 mudur
-p11-kit
 coreutils
 gzip
 libxml2
@@ -39,7 +38,6 @@ binutils
 bison
 ca-certificates
 ccache
-cmake
 comar
 comar-api
 cpio
@@ -55,8 +53,6 @@ gcc
 gdbm
 gettext
 glib2
-gnutls
-iputils
 kernel-headers
 leveldb
 lzo
@@ -75,6 +71,8 @@ plyvel
 python
 python-iniparse
 python-pyliblzma
+readline
+libsigsegv
 unzip
 xz
 yacc
@@ -86,3 +84,6 @@ libtool-ltdl
 libunwind
 bzip2
 diffutils
+findutils
+sed
+bash
