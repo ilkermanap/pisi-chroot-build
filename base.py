@@ -33,8 +33,6 @@ class Indexes:
                     repo = reponame
         return (repo, pkg)
 
-
-
 class Index:
     def __init__(self, name, repo):
         self.url = repo
@@ -56,11 +54,12 @@ class Index:
             eskiHash = open("%s.index.sha1sum" % self.name).readlines()[0]
             if yeniHash.strip() != eskiHash.strip():
                 self.retrieve()
-                f = open("index.sha1sum","w")
+                f = open("%s.index.sha1sum" % self.name,"w")
                 f.write(yeniHash)
                 f.close()
-            elif not (os.path.exists("%s.pisi-index.xml" % self.name)):
-                self.retrieve()
+            else:
+                if not (os.path.exists("%s.pisi-index.xml" % self.name)):
+                    self.retrieve()
         else:
             yeniHash = urllib2.urlopen("%s.sha1sum" % self.url).readlines()[0]
             self.retrieve()
@@ -142,15 +141,19 @@ class Pkg:
             cmd = "wget -c %s/%s -O %s/%s" % (self.base, self.filename, CACHE, self.fname)
             os.system(cmd)
 
-    def install(self, target):
+    def install(self, target, withPisi = False):
         self.fetch()
-        p = Paket(self.fname, target)
-        for dlt in self.deltas:
-            d = dlt.split("/")[-1]
-            if not os.path.exists("%s/%s" % (CACHE, d)):
-                cmd = "wget %s/%s -O %s/%s" % (self.base, dlt, CACHE, d)
-                os.system(cmd)
-                p = Paket(d, target)
+        if withPisi == False:
+            p = Paket(self.fname, target)
+            for dlt in self.deltas:
+                d = dlt.split("/")[-1]
+                if not os.path.exists("%s/%s" % (CACHE, d)):
+                    cmd = "wget %s/%s -O %s/%s" % (self.base, dlt, CACHE, d)
+                    os.system(cmd)
+                    p = Paket(d, target)
+        else:
+            cmd = "pisi it --ignore-safety --ignore-dependency --ignore-comar  -D %s -y %s/%s" \
+                  % (target, "%s/%s" % (CACHE, d))
 
 class Paket:
     def __init__(self, dosya_adi,  target):
@@ -163,7 +166,7 @@ class Paket:
         os.system("cd %s; tar Jxf ../install.tar.xz" % target)
 
     def clean(self):
-        os.system("rm -rf comar; rm -f install.tar.xz; rm -f *.xml")
+        os.system("rm -rf comar; rm -f install.tar.xz; rm -f files.xml metadata.xml")
 
 class Busybox(Paket):
     def unzip(self, target):
@@ -189,6 +192,7 @@ class Chroot:
         self.root = dizin
         self.mounts = ["/proc", "/sys"]
         self.mountDirs()
+        self.liste = liste
         self.installPackages(paketListesi)
         self.runOutside("cp %s/usr/share/baselayout/* %s/etc/." % (self.root, self.root))
         self.runCommand("/sbin/ldconfig")
@@ -199,7 +203,17 @@ class Chroot:
         self.mknods()
         self.dbus()
         self.certificates()
+        self.runOutside("mkdir -p %s/var/cache/pisi/packages/" % self.root)
+        self.runOutside("cp %s/* %s/var/cache/pisi/packages/" % (CACHE, self.root))
 
+
+    def installWithPisi(self):
+        for p in self.liste:
+            p = p.strip()
+            repo, pkg = self.index.package(p)
+            fname = pkg.filename.split("/")[-1]
+            cmd = "pisi --ignore-safety --ignore-dependency --ignore-comar -y it  /var/cache/pisi/packages/%s" % fname
+            self.runCommand(cmd)
 
     def cleanDocs(self):
         if self.root !="":
@@ -310,6 +324,8 @@ if (__name__ == "__main__"):
     x.addRepo("ilker", "http://manap.se/pisi/pisi-index.xml.xz")
 
     x.addRepo("source","https://github.com/ertugerata/PisiLinux/raw/Pisi-2.0/pisi-index.xml.xz")
+    x.runCommand("pisi dr farm")
+    x.installWithPisi()
     #x.addRepo("source","/home/ertugrul/Works/PisiLinux/pisi-index.xml.xz")
     #x.buildpkg(sys.argv[3])
     #x.docker()

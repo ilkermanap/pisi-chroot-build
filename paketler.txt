@@ -1,3 +1,4 @@
+gawk
 mudur
 coreutils
 gzip
@@ -10,6 +11,7 @@ mpfr
 libmpc
 gnuconfig
 catbox
+pam
 libssh2
 libidn
 libcap
@@ -18,7 +20,8 @@ urlgrabber
 baselayout
 acl
 audit
-pam
+readline
+libsigsegv
 shadow
 strace
 run-parts
@@ -38,7 +41,6 @@ binutils
 bison
 ca-certificates
 ccache
-cmake
 comar
 comar-api
 cpio
@@ -54,6 +56,8 @@ gcc
 gdbm
 gettext
 glib2
+findutils
+sed
 bash
 kernel-headers
 leveldb
