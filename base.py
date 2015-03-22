@@ -199,7 +199,8 @@ class Chroot:
             p = p.strip()
             repo, pkg = self.index.package(p)
             fname = pkg.filename.split("/")[-1]
-            cmd = "pisi --ignore-safety --ignore-dependency --ignore-comar -y it  /var/cache/pisi/packages/%s" % fname
+            cmd  = "pisi --ignore-safety --ignore-dependency --ignore-comar "
+            cmd += "-y it  /var/cache/pisi/packages/%s" % fname
             self.runCommand(cmd)
 
     def cleanDocs(self):
@@ -283,8 +284,8 @@ class Chroot:
             print "%s reposundan %s kuruluyor" % (repo, paket)
             pkg.install(self.root)
 
-    def addRepo(self,name, url):
-        self.runCommand("pisi ar %s %s" % (name, url))
+    def addRepo(self,name, url, place = 0):
+        self.runCommand("pisi ar --at %d  %s %s" % (place, name, url))
 
     def buildpkg(self, pkgname):
         self.runCommand("pisi -y  --ignore-safety bi %s" % pkgname)
@@ -311,11 +312,10 @@ if (__name__ == "__main__"):
     K.setPriority("ilker")
     x = Chroot(sys.argv[1], sys.argv[2], K)
 
-    x.addRepo("farm", "http://farm.pisilinux.org/.nofarm-repo/x86_64/pisi-index.xml.xz")
+    x.addRepo("farm", "http://farm.pisilinux.org/.nofarm-repo/x86_64/pisi-index.xml.xz",2)
     x.addRepo("ilker", "http://manap.se/pisi/pisi-index.xml.xz")
 
     x.addRepo("source","https://github.com/ertugerata/PisiLinux/raw/Pisi-2.0/pisi-index.xml.xz")
-    x.runCommand("pisi dr farm")
     x.installWithPisi()
     #x.addRepo("source","/home/ertugrul/Works/PisiLinux/pisi-index.xml.xz")
     #x.buildpkg(sys.argv[3])
