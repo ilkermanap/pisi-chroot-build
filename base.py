@@ -216,18 +216,11 @@ class Chroot:
 
 
     def dbus(self):
-        #self.runOutside("mkdir -p %s/usr/lib/dbus-1.0/" % self.root)
-        #self.runOutside("cp /usr/lib/dbus-1.0/dbus-daemon-launch-helper %s/usr/lib/dbus-1.0/." % self.root)
-        #self.runCommand("groupadd -g 18 messagebus")
 
         if not os.path.exists("%s/var/lib/dbus/machine-id" % self.root):
             self.runCommand("dbus-uuidgen --ensure")
 
         self.runCommand("/sbin/start-stop-daemon -b --start  --pidfile /var/run/dbus/pid --exec /usr/bin/dbus-daemon -- --system")
-
-        #self.runCommand('useradd -m -d /var/run/dbus -r -s /bin/false -u 18 -g 18 messagebus -c "D-Bus Message Daemon"')
-        #self.runCommand("dbus-daemon --system")
-        #self.runCommand("chmod o+x /usr/lib/dbus-1.0/dbus-daemon-launch-helper")
 
     def mknods(self):
         self.runCommand("mkdir -m 755 -p /dev/pts")
@@ -319,4 +312,4 @@ if (__name__ == "__main__"):
     x.installWithPisi()
     #x.addRepo("source","/home/ertugrul/Works/PisiLinux/pisi-index.xml.xz")
     #x.buildpkg(sys.argv[3])
-    #x.docker()
+    x.docker()
