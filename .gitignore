@@ -3,4 +3,4 @@
 paket/*
 .directory
 *.sha1sum
-*.pisi-index.xml
+*.pisi-index.xml*
