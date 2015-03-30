@@ -64,6 +64,7 @@ sed
 shadow
 snappy
 sqlite
+tar
 unzip
 urlgrabber
 xz
