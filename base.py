@@ -283,14 +283,18 @@ class Chroot:
     def buildpkg(self, pkgname):
         self.runCommand("pisi -y  --ignore-safety bi %s" % pkgname)
 
-    def docker(self):
+class Docker(Chroot):
+    def __init__(self,dizin, paketListesi, index):
+        Chroot.__init__(self,dizin, paketListesi, index)
+
+    def dockerImport(self, img="pisichroot"):
         arch = "x86_64"
-        img = "pisichroot"
+        img = img
         release = logtime().replace(":","").replace("-","")
         imgtag = "%s-%s-%s" % (img ,arch, release)
         self.mountDirs(True)
         self.cleanDocs()
-        dockercmd = "tar --numeric-owner --xattrs --acls -C %s -c .  | docker import - %s " % (self.root, imgtag)
+        dockercmd = "tar --numeric-owner --xattrs --acls -C %s -c . | docker import - %s " % (self.root, imgtag)
         tagcmd = "docker tag -f %s %s:latest" % (imgtag, img)
         self.runOutside(dockercmd)
         self.runOutside(tagcmd)
