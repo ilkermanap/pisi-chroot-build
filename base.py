@@ -1,22 +1,79 @@
 import os, sys
 from kayit import *
+# -*- coding: utf8 -*-
 
 ROOTFS=sys.argv[1]
 liste = open("paketler.txt").readlines()
 CACHE = "paket"
 
 class Indexes:
+    """
+    Birden fazla repo kullanimi icin sinif.
+    """
     def __init__(self):
+        """
+        self.indexes dict tipinde degisken.
+        key degeri olarak repo adi kullaniliyor.
+        value olarak, Index nesnesi geliyor.
+
+        self.priority, string tipinde.
+        self.setPriority ile degistiriliyor.
+        Bir repoya oncelik tanimak icin kullaniyoruz.
+        Eger oncelik taninmissa, versiyon ya da release degerine
+        bakmadan, o repodan paket aliniyor. O repoda yoksa, diger
+        repolardan, versiyon ya da release en yuksek olan paket
+        aliniyor.
+        """
         self.indexes = {}
         self.priority = None
 
     def setPriority(self, reponame):
+        """
+        Bir depoya oncelik tanimak icin bu fonksiyon ile oncelik
+        taninacak deponun adini veriyoruz.
+        """
         self.priority = reponame
 
     def addIndex(self, index):
+        """
+        Depo ekleme. eklenecek olan parametre, Index nesnesi olmalidir.
+        """
         self.indexes[index.name]  = index
 
     def package(self, name):
+        """
+        Adi verilen paketi, (repoadi, pkg) seklinde dizi olarak
+        getirir. Repo adi string, pkg ise Pkg sinifindan nesne olur.
+
+        Paketi bulurken, priority verilmisse, ilk once priority verilen
+        depo aranir. O depoda paket bulunmussa, release degerine bakilmadan
+        o paket kullanilir.
+
+        Priority verilmemis ise, eklenmis butun depolarda ayni paketi arar,
+        buldugu en yuksek release degerli paketi repo adi ile birlikte doner.
+
+        Ornek :
+
+        I = Index("farm","http://farm.pisilinux.org/.nofarm-repo/x86_64/pisi-index.xml.xz")
+        J = Index("ilker","http://manap.se/pisi/pisi-index.xml.xz")
+
+        # I ve J, farm ve kisiye ozel repo.
+        K = Indexes()
+        # Indexes nesnemiz
+        K.addIndex(I)
+        K.addIndex(J)
+        K.setPriority("ilker")
+        # repolari ekleyip, ilker reposunu oncelikli yapiyoruz.
+        repoadi, pkg = K.package("gcc")
+
+        Yukaridaki komut ile, ilker reposunda gcc varsa repoadi = "ilker",
+        pkg = ilker reposundaki gcc paketine isaret eden Pkg nesnesi olur.
+
+        pkg.install()  komutu ile, lokalde gcc paketi yoksa, repodan cekilir,
+        pisi kullanilmadan, paket icinde bulunan install.tar.xz paketi sisteme
+        acilarak kurulur.
+
+        """
         selected = 0
         pkg = None
         repo = ""
@@ -34,6 +91,13 @@ class Indexes:
         return (repo, pkg)
 
 class Index:
+    """
+    Bir pisi reposunu tanimlamak icin kullanilir.
+
+    Bu tipte nesneyi yaratirken, repo adi, ve repo adresi verilir:
+
+    x = Index("farm","http://farm.pisilinux.org/.nofarm-repo/x86_64/pisi-index.xml.xz")
+    """
     def __init__(self, name, repo):
         self.url = repo
         self.name = name
@@ -48,6 +112,10 @@ class Index:
         self.parse()
 
     def checkHash(self):
+        """
+        Repo hash degerini internette olan ile kontrol ederek, yenisi cikmis ise
+        repoyu yeniler.
+        """
         import urllib2
         if os.path.exists("%s.index.sha1sum" % self.name):
             yeniHash = urllib2.urlopen("%s.sha1sum" % self.url).readlines()[0]
@@ -70,10 +138,22 @@ class Index:
 
 
     def retrieve(self):
+        """
+        Repo icin pisi-index.xml.xz dosyasini getirir. repoadi.pisi-index.xml.xz
+        olarak getirip, ardindan  dosyayi acar.
+        """
         os.system("wget %s -O %s.pisi-index.xml.xz" % (self.url, self.name))
         os.system("xz -d %s.pisi-index.xml.xz" % self.name)
 
     def parse(self):
+        """
+        lxml sinifi kullanarak pisi-index dosyasini parse eder.
+        self.packages dict degiskenine paket ismi ile paketler eklenir.
+
+        farm = Index("farm", "http://farm.url.com.tr/pisi-index.xml.xz")
+        gcc = farm.packages["gcc"]
+        gcc.install()
+        """
         from lxml import objectify as obj
         tree = obj.fromstring(self.content)
         for c in tree.getchildren():
