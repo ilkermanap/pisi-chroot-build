@@ -1,4 +1,5 @@
-from base import Index, Indexes, Docker
+import os
+from base import *
 
 os.system("mkdir -p %s" % CACHE)
 I = Index("farm","http://farm.pisilinux.org/.nofarm-repo/x86_64/pisi-index.xml.xz")
