@@ -394,6 +394,3 @@ if (__name__ == "__main__"):
 
     x.addRepo("source","https://github.com/ertugerata/PisiLinux/raw/Pisi-2.0/pisi-index.xml.xz")
     x.installWithPisi()
-    #x.addRepo("source","/home/ertugrul/Works/PisiLinux/pisi-index.xml.xz")
-    #x.buildpkg(sys.argv[3])
-    x.docker()
