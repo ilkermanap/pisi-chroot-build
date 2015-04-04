@@ -1,3 +1,4 @@
+import os
 from base import Index, Indexes, Docker
 
 os.system("mkdir -p %s" % CACHE)

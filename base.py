@@ -159,6 +159,8 @@ class Index:
         for c in tree.getchildren():
             if c.tag == "Package":
                 for d in c.getchildren():
+                    if d.tag == "PackageHash":
+                        self.packages[pname].hash = d.text
                     if d.tag == "Name":
                         pname = d.text
                         self.packages[pname] = Pkg(self.base, pname)
@@ -192,6 +194,7 @@ class Pkg:
         self.name = pname
         self.base = base
         self.filename = ""
+        self.hash = ""
         self.release = -1
         self.deltas = []
         self.fname = self.filename.split("/")[-1]
@@ -220,6 +223,17 @@ class Pkg:
         if not os.path.exists("%s/%s"  % (CACHE, self.fname)):
             cmd = "wget -c %s/%s -O %s/%s" % (self.base, self.filename, CACHE, self.fname)
             os.system(cmd)
+        else:
+            cmd = "sha1sum %s/%s | awk '{print $1}' "  % (CACHE, self.fname)
+            cachehash = os.popen(cmd,"r").readlines()[0].strip()
+            if cachehash != self.hash:
+                print "HASH FAILED: downloading again"
+                print "Expected : %s" % self.hash
+                print "Found    : %s" % cachehash
+                erase = "rm -rf %s/%s" % (CACHE, self.fname ) 
+                os.system(erase)
+                cmd = "wget  %s/%s -O %s/%s" % (self.base, self.filename, CACHE, self.fname)
+                os.system(cmd)
 
     def install(self, target, withPisi = False):
         self.fetch()
@@ -358,7 +372,9 @@ class Chroot:
             pkg.install(self.root)
 
     def addRepo(self,name, url, place = 0):
-        self.runCommand("pisi ar --at %d  %s %s" % (place, name, url))
+        cmd = "pisi ar  %s %s --at %d" % (name, url, place)
+        print cmd
+        self.runCommand("pisi ar  %s %s --at %d" % (name, url, place))
 
     def buildpkg(self, pkgname):
         self.runCommand("pisi -y  --ignore-safety bi %s" % pkgname)
@@ -389,11 +405,12 @@ if (__name__ == "__main__"):
     K.setPriority("ilker")
     x = Chroot(sys.argv[1], sys.argv[2], K)
 
-    x.addRepo("farm", "http://farm.pisilinux.org/.nofarm-repo/x86_64/pisi-index.xml.xz",2)
     x.addRepo("ilker", "http://manap.se/pisi/pisi-index.xml.xz")
-
     x.addRepo("source","https://github.com/ertugerata/PisiLinux/raw/Pisi-2.0/pisi-index.xml.xz")
+    x.addRepo("farm", "http://farm.pisilinux.org/.nofarm-repo/x86_64/pisi-index.xml.xz",2)
+  
+
     x.installWithPisi()
     #x.addRepo("source","/home/ertugrul/Works/PisiLinux/pisi-index.xml.xz")
     #x.buildpkg(sys.argv[3])
-    x.docker()
+    #x.docker()
