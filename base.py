@@ -306,7 +306,7 @@ class Chroot:
             self.runOutside("rm -rf %s/usr/share/locale/e[a-m,o-z]*" % self.root)
             self.runCommand("rm -rf /var/cache/pisi/packages/*")
             self.runCommand("rm -rf /var/cache/pisi/archives/*")
-            self.runCommand("rm -rf /var/run/dbus/pid")
+            self.runCommand("rm -rf /run/dbus/pid")
 
 
     def dbus(self):
@@ -314,7 +314,7 @@ class Chroot:
         if not os.path.exists("%s/var/lib/dbus/machine-id" % self.root):
             self.runCommand("dbus-uuidgen --ensure")
 
-        self.runCommand("/sbin/start-stop-daemon -b --start  --pidfile /var/run/dbus/pid --exec /usr/bin/dbus-daemon -- --system")
+        self.runCommand("/sbin/start-stop-daemon -b --start  --pidfile /run/dbus/pid --exec /usr/bin/dbus-daemon -- --system")
 
     def mknods(self):
         self.runCommand("mkdir -m 755 -p /dev/pts")
