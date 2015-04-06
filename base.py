@@ -3,7 +3,8 @@ from kayit import *
 # -*- coding: utf8 -*-
 
 ROOTFS=sys.argv[1]
-liste = open("paketler.txt").readlines()
+BASE = "acl attr audit baselayout bash bzip2 ca-certificates catbox comar comar-api coreutils cpio cracklib curl db dbus dbus-glib dbus-python diffutils elfutils expat file findutils gdbm gettext glib2 glibc gmp gperftools grep gzip kernel-headers leveldb libcap libcap-ng libffi libgcc libgomp libidn libpcre libsigsegv libssh2 libunistring libunwind libxml2 mudur nasm ncurses openssl pam patch perl piksemel pisi pisilinux-python plyvel procps pycurl python python-pyliblzma readline run-parts sed shadow snappy sqlite tar unzip urlgrabber xz zip zlib".split()
+DEVEL = "autoconf autogen automake binutils bison flex gawk gc gcc gmp gnuconfig guile libmpc libtool-ltdl libtool lzo m4 make mpfr pkgconfig python-iniparse yacc glibc-devel".split()
 CACHE = "paket"
 
 class Indexes:
@@ -273,8 +274,8 @@ class Chroot:
         self.root = dizin
         self.mounts = ["/proc", "/sys"]
         self.mountDirs()
-        self.liste = liste
-        self.installPackages(paketListesi)
+        self.liste = paketListesi
+        self.installPackages(self.liste)
         self.runOutside("cp %s/usr/share/baselayout/* %s/etc/." % (self.root, self.root))
         self.runCommand("/sbin/ldconfig")
         self.runCommand("/sbin/update-environment")
@@ -288,8 +289,13 @@ class Chroot:
         self.runOutside("cp %s/* %s/var/cache/pisi/packages/" % (CACHE, self.root))
 
 
-    def installWithPisi(self):
-        for p in self.liste:
+    def installWithPisi(self, pkglist = None):
+        if pkglist != None:
+            liste = pkglist
+        else:
+            liste = self.liste
+
+        for p in liste:
             p = p.strip()
             repo, pkg = self.index.package(p)
             fname = pkg.filename.split("/")[-1]
@@ -364,8 +370,13 @@ class Chroot:
             self.rootlog.mesaj("chroot icinde calisacak : (%s) " % cmd)
             self.rootlog.mesaj(x)
 
-    def installPackages(self, paketListesi):
-        for paket in open(paketListesi).readlines():
+    def installPackages(self, pkglist = None):
+        if pkglist != None:
+            liste = pkglist
+        else:
+            liste = self.liste
+
+        for paket in liste:
             paket = paket.strip()
             repo, pkg = self.index.package(paket)
             print "%s reposundan %s kuruluyor" % (repo, paket)
@@ -403,14 +414,15 @@ if (__name__ == "__main__"):
     K.addIndex(I)
     K.addIndex(J)
     K.setPriority("ilker")
-    x = Chroot(sys.argv[1], sys.argv[2], K)
+    x = Chroot(sys.argv[1], BASE, K)
 
     x.addRepo("ilker", "http://manap.se/pisi/pisi-index.xml.xz")
     x.addRepo("source","https://github.com/ertugerata/PisiLinux/raw/Pisi-2.0/pisi-index.xml.xz")
     x.addRepo("farm", "http://farm.pisilinux.org/.nofarm-repo/x86_64/pisi-index.xml.xz",2)
-
-    
     x.installWithPisi()
+    x.installPackages(DEVEL)
+    x.runOutside("cp %s/* %s/var/cache/pisi/packages/" % (CACHE, x.root))
+    x.installWithPisi(DEVEL)
     #x.addRepo("source","/home/ertugrul/Works/PisiLinux/pisi-index.xml.xz")
     #x.buildpkg(sys.argv[3])
     #x.docker()
