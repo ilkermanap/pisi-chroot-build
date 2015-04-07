@@ -41,9 +41,10 @@ class Container:
         self.imageid = imageid
         self.created = created
         self.size = virtsize
+        os.system("docker run %s" % self.repo)
 
     def runCommand(self, command):
-        cmd = "docker run %s %s " % (self.repo, command)
+        cmd = "docker exec %s %s " % (self.repo, command)
         print "starting ",  cmd
         ans = os.popen(cmd).read()
         print "finished ",  cmd

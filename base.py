@@ -3,7 +3,7 @@ from kayit import *
 # -*- coding: utf8 -*-
 
 ROOTFS=sys.argv[1]
-BASE = "acl attr audit baselayout bash bzip2 ca-certificates catbox comar comar-api coreutils cpio cracklib curl db dbus dbus-glib dbus-python diffutils elfutils expat file findutils gdbm gettext glib2 glibc gmp gperftools grep gzip kernel-headers leveldb libcap libcap-ng libffi libgcc libgomp libidn libpcre libsigsegv libssh2 libunistring libunwind libxml2 mudur nasm ncurses openssl pam patch perl piksemel pisi pisilinux-python plyvel procps pycurl python python-pyliblzma readline run-parts sed shadow snappy sqlite tar unzip urlgrabber xz zip zlib".split()
+BASE = "acl attr audit baselayout bash bzip2 ca-certificates catbox comar comar-api coreutils cpio cracklib curl db dbus dbus-glib dbus-python diffutils elfutils expat file findutils gdbm gettext glib2 glibc gmp gperftools grep gzip kernel-headers less leveldb libcap libcap-ng libffi libgcc libgomp libidn libpcre libsigsegv libssh2 libunistring libunwind libxml2 mudur nasm ncurses openssl pam patch perl piksemel pisi pisilinux-python plyvel procps pycurl python python-pyliblzma readline run-parts sed shadow snappy sqlite tar unzip urlgrabber xz zip zlib".split()
 DEVEL = "autoconf autogen automake binutils bison flex gawk gc gcc gmp gnuconfig guile libmpc libtool-ltdl libtool lzo m4 make mpfr pkgconfig python-iniparse yacc glibc-devel".split()
 CACHE = "paket"
 
@@ -144,7 +144,7 @@ class Index:
         olarak getirip, ardindan  dosyayi acar.
         """
         os.system("wget %s -O %s.pisi-index.xml.xz" % (self.url, self.name))
-        os.system("xz -d %s.pisi-index.xml.xz" % self.name)
+        os.system("xz -f -d %s.pisi-index.xml.xz" % self.name)
 
     def parse(self):
         """
@@ -303,7 +303,7 @@ class Chroot:
             cmd += "-y it  /var/cache/pisi/packages/%s" % fname
             self.runCommand(cmd)
 
-    def cleanDocs(self):
+    def cleanDocs(self, clearDbus = True):
         if self.root !="":
             self.runOutside("rm -rf %s/usr/share/man" % self.root)
             self.runOutside("rm -rf %s/usr/share/doc" % self.root)
@@ -312,15 +312,16 @@ class Chroot:
             self.runOutside("rm -rf %s/usr/share/locale/e[a-m,o-z]*" % self.root)
             self.runCommand("rm -rf /var/cache/pisi/packages/*")
             self.runCommand("rm -rf /var/cache/pisi/archives/*")
-            self.runCommand("rm -rf /run/dbus/pid")
+            if clearDbus == True:
+                self.runCommand("rm -rf /run/dbus/pid")
 
 
-    def dbus(self):
+    def dbus(self, start = False):
+        if start == True:
+            if not os.path.exists("%s/var/lib/dbus/machine-id" % self.root):
+                self.runCommand("dbus-uuidgen --ensure")
 
-        if not os.path.exists("%s/var/lib/dbus/machine-id" % self.root):
-            self.runCommand("dbus-uuidgen --ensure")
-
-        self.runCommand("/sbin/start-stop-daemon -b --start  --pidfile /run/dbus/pid --exec /usr/bin/dbus-daemon -- --system")
+            self.runCommand("/sbin/start-stop-daemon -b --start  --pidfile /run/dbus/pid --exec /usr/bin/dbus-daemon -- --system")
 
     def mknods(self):
         self.runCommand("mkdir -m 755 -p /dev/pts")
