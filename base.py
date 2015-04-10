@@ -2,7 +2,6 @@ import os, sys
 from kayit import *
 # -*- coding: utf8 -*-
 
-ROOTFS=sys.argv[1]
 BASE = "acl attr baselayout bash bzip2 ca-certificates catbox comar comar-api coreutils cpio cracklib curl db dbus dbus-glib dbus-python diffutils elfutils expat file findutils gdbm gettext glib2 glibc gmp gperftools grep gzip kernel-headers less leveldb libcap libcap-ng libffi libgcc libgomp libidn libpcre libsigsegv libssh2 libunistring libunwind libuser libxml2 mudur nasm ncurses openssl pam patch perl piksemel pisi pisilinux-python plyvel popt procps pycurl python python-pyliblzma readline run-parts sed shadow snappy sqlite tar unzip urlgrabber which xz zip zlib".split()
 DEVEL = "autoconf autogen automake binutils bison flex gawk gc gcc gmp gnuconfig guile libmpc libtool-ltdl libtool lzo m4 make mpfr pkgconfig python-iniparse yacc glibc-devel".split()
 CACHE = "paket"
@@ -308,10 +307,10 @@ class Chroot:
             self.runOutside("rm -rf %s/usr/share/man" % self.root)
             self.runOutside("rm -rf %s/usr/share/doc" % self.root)
             self.runOutside("rm -rf %s/usr/share/gtk-doc" % self.root)
-            self.runOutside("rm -rf %s/usr/share/locale/[a-d][f-z]*" % self.root)
-            self.runOutside("rm -rf %s/usr/share/locale/e[a-m,o-z]*" % self.root)
-            self.runCommand("rm -rf /var/cache/pisi/packages/*")
-            self.runCommand("rm -rf /var/cache/pisi/archives/*")
+            self.runOutside("rm -rf %s/usr/share/locale/[a-d,f-z]*" % self.root)
+            self.runOutside("rm -rf %s/usr/share/locale/e[a-m,o-z,@,_]*" % self.root)
+            self.runOutside("rm -rf %s/var/cache/pisi/packages" % self.root)
+            self.runOutside("rm -rf %s/var/cache/pisi/archives" % self.root)
             if clearDbus == True:
                 self.runCommand("rm -rf /run/dbus/pid")
 
@@ -395,13 +394,16 @@ class Docker(Chroot):
     def __init__(self,dizin, paketListesi, index):
         Chroot.__init__(self,dizin, paketListesi, index)
 
+    def prepareImport(self):
+        self.mountDirs(True)
+        self.cleanDocs()
+
     def dockerImport(self, img="pisichroot"):
         arch = "x86_64"
         img = img
         release = logtime().replace(":","").replace("-","")
         imgtag = "%s-%s-%s" % (img ,arch, release)
-        self.mountDirs(True)
-        self.cleanDocs()
+        self.prepareImport()
         dockercmd = "tar --numeric-owner --xattrs --acls -C %s -c . | docker import - %s " % (self.root, imgtag)
         tagcmd = "docker tag -f %s %s:latest" % (imgtag, img)
         self.runOutside(dockercmd)
