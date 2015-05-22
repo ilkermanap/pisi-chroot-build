@@ -2,10 +2,8 @@ import os
 from base import *
 
 os.system("mkdir -p %s" % CACHE)
-I = Index("farm","http://farm.pisilinux.org/.nofarm-repo/x86_64/pisi-index.xml.xz")
 J = Index("ilker","http://manap.se/pisi/pisi-index.xml.xz")
 K = Indexes()
-K.addIndex(I)
 K.addIndex(J)
 K.setPriority("ilker")
 
