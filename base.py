@@ -411,21 +411,16 @@ class Docker(Chroot):
 
 if (__name__ == "__main__"):
     os.system("mkdir -p %s" % CACHE)
-    I = Index("farm","http://farm.pisilinux.org/.nofarm-repo/x86_64/pisi-index.xml.xz")
     J = Index("ilker","http://manap.se/pisi/pisi-index.xml.xz")
     K = Indexes()
-    K.addIndex(I)
     K.addIndex(J)
     K.setPriority("ilker")
     x = Chroot(sys.argv[1], BASE, K)
 
     x.addRepo("ilker", "http://manap.se/pisi/pisi-index.xml.xz")
-    x.addRepo("source","https://github.com/ertugerata/PisiLinux/raw/Pisi-2.0/pisi-index.xml.xz")
-    x.addRepo("farm", "http://farm.pisilinux.org/.nofarm-repo/x86_64/pisi-index.xml.xz",2)
+    x.addRepo("source","https://github.com/pisilinux/core/raw/master/pisi-index.xml.xz")
     x.installWithPisi()
     x.installPackages(DEVEL)
     x.runOutside("cp %s/* %s/var/cache/pisi/packages/" % (CACHE, x.root))
     x.installWithPisi(DEVEL)
-    #x.addRepo("source","/home/ertugrul/Works/PisiLinux/pisi-index.xml.xz")
-    #x.buildpkg(sys.argv[3])
-    #x.docker()
+
