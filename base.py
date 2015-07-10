@@ -414,7 +414,7 @@ if (__name__ == "__main__"):
     J = Index("pisi-2.0","http://ciftlik.pisilinux.org/pisi-2.0/pisi-index.xml.xz")
     K = Indexes()
     K.addIndex(J)
-    K.setPriority("ilker")
+    K.setPriority("pisi-2.0")
     x = Chroot(sys.argv[1], BASE, K)
 
     x.addRepo("pisi-2.0", "http://ciftlik.pisilinux.org/pisi-2.0/pisi-index.xml.xz")
