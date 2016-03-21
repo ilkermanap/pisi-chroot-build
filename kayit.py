@@ -4,6 +4,8 @@ class Kayit:
     def __init__(self, dosya_adi):
         try:
             self.dosya_adi = dosya_adi
+            f = open(self.dosya_adi,"a")
+            f.close()
         except:
             print "%s kayit dosyasina erisim sorunu" % self.dosya
             sys.exit(1)
