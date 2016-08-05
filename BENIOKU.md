@@ -37,4 +37,4 @@ sudo python pisichroot.py -A /kaynakarsivi -P /pisiarsivi -p wget -d on
 
 sudo python pisichroot.py -A /kaynakarsivi -P /pisiarsivi -p https://github.com/developer/paket/pspec.xml
 
-https://gist.github.com/ertugerata/1be7ac1e59baec6b8d77170f60644d80 
+workflow: https://gist.github.com/ertugerata/1be7ac1e59baec6b8d77170f60644d80 
