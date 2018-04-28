@@ -1,10 +1,13 @@
+# -*- coding: utf-8 -*-
 import os, sys
 from kayit import *
-# -*- coding: utf8 -*-
+import requests
+
 
 BASE = "acl attr baselayout bash bzip2 ca-certificates catbox comar comar-api coreutils cpio cracklib curl db dbus dbus-glib dbus-python diffutils elfutils expat file findutils gdbm gettext glib2 glibc gmp gperftools grep gzip kernel-headers less leveldb libcap libcap-ng libffi libgcc libgomp libidn libpcre libsigsegv libssh2 libunistring libunwind libuser libxml2 mudur nasm ncurses openssl pam patch perl piksemel pisi pisilinux-python plyvel popt procps pycurl python python-pyliblzma readline run-parts sed shadow snappy sqlite tar unzip urlgrabber which xz zip zlib".split()
 DEVEL = "autoconf autogen automake binutils bison flex gawk gc gcc gmp gnuconfig guile libmpc libtool-ltdl libtool lzo m4 make mpfr pkgconfig python-iniparse yacc glibc-devel".split()
 CACHE = "paket"
+
 
 class Indexes:
     """
@@ -90,6 +93,7 @@ class Indexes:
                     repo = reponame
         return (repo, pkg)
 
+    
 class Index:
     """
     Bir pisi reposunu tanimlamak icin kullanilir.
@@ -116,9 +120,9 @@ class Index:
         Repo hash degerini internette olan ile kontrol ederek, yenisi cikmis ise
         repoyu yeniler.
         """
-        import urllib2
+        yeniHash = requests.get("%s.sha1sum" % self.url).text.strip()
+
         if os.path.exists("%s.index.sha1sum" % self.name):
-            yeniHash = urllib2.urlopen("%s.sha1sum" % self.url).readlines()[0]
             eskiHash = open("%s.index.sha1sum" % self.name).readlines()[0]
             if yeniHash.strip() != eskiHash.strip():
                 self.retrieve()
@@ -129,13 +133,10 @@ class Index:
                 if not (os.path.exists("%s.pisi-index.xml" % self.name)):
                     self.retrieve()
         else:
-            yeniHash = urllib2.urlopen("%s.sha1sum" % self.url).readlines()[0]
             self.retrieve()
             f = open("%s.index.sha1sum" % self.name,"w")
             f.write(yeniHash)
             f.close()
-
-
 
     def retrieve(self):
         """
@@ -189,6 +190,7 @@ class Index:
                 print "      ", p
             print "-----------------------------------------"
 
+            
 class Pkg:
     def __init__(self, base, pname):
         self.name = pname
@@ -249,6 +251,7 @@ class Pkg:
             cmd = "pisi it --ignore-safety --ignore-dependency --ignore-comar  -D %s -y %s/%s" \
                   % (target, "%s/%s" % (CACHE, d))
 
+                  
 class Paket:
     def __init__(self, dosya_adi,  target):
         self.adi = dosya_adi
@@ -393,6 +396,7 @@ class Chroot:
     def buildpkg(self, pkgname):
         self.runCommand("pisi -y  --ignore-safety bi %s" % pkgname)
 
+
 class Docker(Chroot):
     def __init__(self,dizin, paketListesi, index):
         Chroot.__init__(self,dizin, paketListesi, index)
@@ -412,6 +416,7 @@ class Docker(Chroot):
         self.runOutside(dockercmd)
         self.runOutside(tagcmd)
 
+        
 if (__name__ == "__main__"):
     os.system("mkdir -p %s" % CACHE)
     J = Index("pisi-2.0","http://ciftlik.pisilinux.org/pisi-2.0/pisi-index.xml.xz")
