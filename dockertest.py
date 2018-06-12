@@ -3,7 +3,7 @@ from base import *
 
 os.system("mkdir -p %s" % CACHE)
 #J = Index("pisi-2.0","http://ciftlik.pisilinux.org/pisi-2.0/pisi-index.xml.xz")
-J = Index("beta","http://ciftlik.pisilinux.org/2.0-Beta.1/pisi-index.xml.xz")
+J = Index("beta","https://ciftlik.pisilinux.org/2.0-Beta.1/pisi-index.xml.xz")
 
 K = Indexes()
 K.addIndex(J)

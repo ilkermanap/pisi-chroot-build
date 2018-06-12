@@ -4,7 +4,7 @@ from kayit import *
 import requests
 
 
-BASE = "acl attr baselayout bash bzip2 ca-certificates catbox comar comar-api coreutils cpio cracklib curl db dbus dbus-glib dbus-python diffutils elfutils expat file findutils gdbm gettext glib2 glibc gmp gperftools grep gzip kernel-headers less leveldb libcap libcap-ng libffi libgcc libgomp libidn libpcre libsigsegv libssh2 libunistring libunwind libuser libxml2 mudur nasm ncurses openssl pam patch perl piksemel pisi pisilinux-python plyvel popt procps pycurl python python-pyliblzma readline run-parts sed shadow snappy sqlite tar unzip urlgrabber which xz zip zlib".split()
+BASE = "acl attr baselayout bash bzip2 ca-certificates catbox comar comar-api coreutils cpio cracklib curl db dbus dbus-glib dbus-python diffutils elfutils expat file findutils gdbm gettext glib2 glibc gmp gperftools grep gzip kernel-headers less leveldb libcap libcap-ng libffi libgcc libgomp libidn2 libpcre libsigsegv libssh2 libunistring libunwind libuser libxml2 mudur nasm ncurses openssl pam patch perl piksemel pisi pisilinux-python plyvel popt procps pycurl python python-pyliblzma readline run-parts sed shadow snappy sqlite tar unzip urlgrabber which xz zip zlib".split()
 DEVEL = "autoconf autogen automake binutils bison flex gawk gc gcc gmp gnuconfig guile libmpc libtool-ltdl libtool lzo m4 make mpfr pkgconfig python-iniparse yacc glibc-devel".split()
 CACHE = "paket"
 
