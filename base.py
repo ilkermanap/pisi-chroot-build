@@ -412,7 +412,7 @@ class Docker(Chroot):
         imgtag = "%s-%s-%s" % (img ,arch, release)
         self.prepareImport()
         dockercmd = "tar --numeric-owner --xattrs --acls -C %s -c . | docker import - %s " % (self.root, imgtag)
-        tagcmd = "docker tag -f %s %s:latest" % (imgtag, img)
+        tagcmd = "docker tag %s %s:latest" % (imgtag, img)
         self.runOutside(dockercmd)
         self.runOutside(tagcmd)
 
